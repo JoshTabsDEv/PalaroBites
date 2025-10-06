@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Store, Package, Users, DollarSign, Plus } from "lucide-react";
 import StoreManagement from "@/components/admin/store-management";
 import ProductManagement from "@/components/admin/product-management";
-import OrderManagement from "@/components/admin/order-management";
+import OrderManagement from "./order-management";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 
 interface AdminDashboardProps {

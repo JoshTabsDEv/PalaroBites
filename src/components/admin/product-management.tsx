@@ -25,6 +25,19 @@ interface Product {
 interface StoreOption { id: string; name: string }
 const defaultStores: StoreOption[] = []
 
+// Strongly-typed rows from Supabase for products with joined store name
+type ProductRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  image: string | null;
+  store_id: string;
+  category: string | null;
+  is_available: boolean | null;
+  stores?: { name: string } | { name: string }[] | null;
+};
+
 const categories = [
   "Coffee", "Sandwiches", "Pastries", "Pizza", "Italian", "Fast Food",
   "Healthy", "Salads", "Smoothies", "Burgers", "American", "Comfort Food"
@@ -60,19 +73,20 @@ export default function ProductManagement() {
       if (storeErr) setError(storeErr.message);
       if (productErr) setError(productErr.message);
       if (!storeErr && storeRows) {
-        setStores(storeRows.map((s: any) => ({ id: s.id, name: s.name })));
+        setStores((storeRows as StoreOption[]).map((s) => ({ id: s.id, name: s.name })));
       }
-      const getStoreName = (s: any) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
+      const getStoreName = (s: ProductRow["stores"]) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
       if (!productErr && productRows) {
-        setProducts(productRows.map((p: any) => ({
+        const rows = productRows as ProductRow[];
+        setProducts(rows.map((p) => ({
           id: p.id,
           name: p.name,
-          description: p.description || "",
-          price: Number(p.price || 0),
-          image: p.image || "/logo.png",
+          description: p.description ?? "",
+          price: Number(p.price ?? 0),
+          image: p.image ?? "/logo.png",
           storeId: p.store_id,
           storeName: getStoreName(p.stores),
-          category: p.category || "",
+          category: p.category ?? "",
           isAvailable: Boolean(p.is_available),
         })));
       }
@@ -96,19 +110,20 @@ export default function ProductManagement() {
     };
     const { data, error } = await supabase.from("products").insert(payload).select("id,name,description,price,image,store_id,category,is_available,stores(name)").single();
     if (error) { setError(error.message); return; }
-    const createdStoreName = Array.isArray((data as any).stores)
-      ? ((data as any).stores as any[])[0]?.name ?? ""
-      : ((data as any).stores as any)?.name ?? "";
+    const d = data as ProductRow;
+    const createdStoreName = Array.isArray(d.stores)
+      ? (d.stores as { name: string }[])[0]?.name ?? ""
+      : (d.stores as { name: string } | undefined)?.name ?? "";
     const created: Product = {
-      id: data.id,
-      name: data.name,
-      description: data.description || "",
-      price: Number(data.price || 0),
-      image: data.image || "/logo.png",
-      storeId: data.store_id,
+      id: d.id,
+      name: d.name,
+      description: d.description || "",
+      price: Number(d.price || 0),
+      image: d.image || "/logo.png",
+      storeId: d.store_id,
       storeName: createdStoreName,
-      category: data.category || "",
-      isAvailable: Boolean(data.is_available),
+      category: d.category || "",
+      isAvailable: Boolean(d.is_available),
     };
     setProducts([...products, created]);
     setNewProduct({ name: "", description: "", price: 0, image: "/logo.png", storeId: "", category: "", isAvailable: true });
