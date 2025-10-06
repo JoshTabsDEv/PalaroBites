@@ -8,6 +8,7 @@ import { Badge } from "../../ui/badge";
 import { Button, type ButtonProps } from "../../ui/button";
 import Glow from "../../ui/glow";
 import { Mockup, MockupFrame } from "../../ui/mockup";
+import Image from "next/image";
 import Screenshot from "../../ui/screenshot";
 import { Section } from "../../ui/section";
 
@@ -32,13 +33,13 @@ export default function Hero({
   title = "Exquisite Culinary Experience",
   description = "Discover the finest flavors crafted with passion",
   mockup = (
-    <Screenshot
-      srcLight="/dashboard-light.png"
-      srcDark="/dashboard-dark.png"
-      alt="Launch UI app screenshot"
+    <Image
+      src="/hero.png"
+      alt="Hero preview"
       width={1248}
       height={765}
-      className="w-full"
+      className="w-full h-auto"
+      priority
     />
   ),
   // badge = (
@@ -53,11 +54,11 @@ export default function Hero({
   //   </Badge>
   // ),
   buttons = [
-    {
-      href: "https://www.launchuicomponents.com/",
-      text: "Explore Menu",
-      variant: "dark",
-    },
+    // {
+    //   href: "https://www.launchuicomponents.com/",
+    //   text: "Explore Menu",
+    //   variant: "dark",
+    // },
     // {
     //   href: "https://www.launchuicomponents.com/",
     //   text: "Github",
