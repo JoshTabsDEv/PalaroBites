@@ -44,7 +44,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({
-  logo = <img src="/logo.png" alt="Programmers Guild" className="w-30 h-30  mr-2" />,
+  logo = <img src="/logo.png" alt="Programmers Guild" className="h-8 w-8 md:h-10 md:w-10 mr-2" />,
   name = "",
   homeUrl = "/",
   mobileLinks = [
