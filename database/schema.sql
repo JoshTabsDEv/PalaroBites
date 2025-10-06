@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    customer_email TEXT,
     customer_name TEXT NOT NULL,
     customer_phone TEXT NOT NULL,
     delivery_address TEXT NOT NULL,
@@ -168,32 +169,20 @@ GRANT SELECT ON products_with_stores TO authenticated;
 CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  recipient_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated can read messages" ON messages
-  FOR SELECT TO authenticated USING (true);
+-- Read messages where you are sender or recipient (or broadcast when recipient_id is null)
+CREATE POLICY IF NOT EXISTS "Messages: read own" ON messages
+  FOR SELECT TO authenticated USING (
+    user_id = auth.uid() OR recipient_id = auth.uid() OR recipient_id IS NULL
+  );
 
-CREATE POLICY "Authenticated can insert own messages" ON messages
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-
--- Conversations: admin must initiate before user can send
-CREATE TABLE IF NOT EXISTS conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  admin_started BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
-
--- Admins manage conversations (assume 'authenticated' admins via app logic)
-CREATE POLICY "Authenticated can read own conversation" ON conversations
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
-
-CREATE POLICY "Authenticated can upsert own conversation" ON conversations
+-- Insert only as yourself
+CREATE POLICY IF NOT EXISTS "Messages: insert self" ON messages
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 

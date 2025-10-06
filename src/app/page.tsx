@@ -5,7 +5,7 @@ import FooterSection from "@/components/sections/footer/default";
 import Hero from "@/components/sections/hero/default";
 import Navbar from "@/components/sections/navbar/default";
 import { StoreCard } from "@/components/store-card";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,7 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState("all");
   const [showProducts, setShowProducts] = useState(false);
   const supabase = createSupabaseBrowserClient();
+  const productsSectionRef = useRef<HTMLDivElement | null>(null);
 
   const categories = useMemo(() => {
     const unique = Array.from(
@@ -149,13 +150,12 @@ export default function Home() {
   
 
   const handleStoreSelect = (storeId: string) => {
-    // Switch to products view and filter by the selected store
+    // Switch to products view, filter by store, then scroll to products section
     setShowProducts(true);
     setSelectedStore(storeId);
-    // Optional: scroll to products section
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    setTimeout(() => {
+      productsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   };
 
   const filteredProducts = products.filter(product => {
@@ -229,7 +229,7 @@ export default function Home() {
           </div>
         ) : (
           /* Products View */
-          <div className="space-y-8">
+          <div ref={productsSectionRef} className="space-y-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">All Products</h2>
               <p className="text-lg text-gray-600">Browse all available products across stores</p>

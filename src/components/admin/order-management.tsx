@@ -16,6 +16,7 @@ interface OrderRow {
   user_id: string;
   customer_name: string;
   customer_phone: string;
+  customer_email?: string | null;
   total: number;
   status: OrderStatus;
   created_at: string;
@@ -54,7 +55,7 @@ export default function OrderManagement() {
     setLoading(true);
     const { data, error } = await supabase
       .from('orders')
-      .select('id,user_id,customer_name,customer_phone,total,status,created_at')
+      .select('id,user_id,customer_name,customer_phone,customer_email,total,status,created_at')
       .order('created_at', { ascending: false });
     if (!error && data) setOrders(data );
     setLoading(false);
@@ -78,12 +79,10 @@ export default function OrderManagement() {
     if (!error) setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
   };
 
-  const startChat = async (userId: string) => {
-    // Admin-initiated conversation unlocks user sending
-    await supabase
-      .from('conversations')
-      .upsert({ user_id: userId, admin_started: true }, { onConflict: 'user_id' });
-    window.open('/chat', '_blank');
+  const startChat = (email?: string | null) => {
+    if (!email) return;
+    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
+    window.open(url, '_blank');
   };
 
   return (
@@ -136,7 +135,7 @@ export default function OrderManagement() {
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'out_for_delivery')}>Out</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'delivered')}>Delivered</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'cancelled')}>Cancel</Button>
-                      <Button variant="default" size="sm" onClick={() => startChat(o.user_id)}>Chat</Button>
+                      <Button variant="default" size="sm" onClick={() => startChat(o.customer_email)}>Chat</Button>
                       <Button className="col-span-2 sm:col-span-1" variant="ghost" size="sm" onClick={() => window.open(`/order-success?orderId=${o.id}`, '_blank')}>
                         Details <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>

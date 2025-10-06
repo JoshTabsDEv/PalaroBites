@@ -27,6 +27,7 @@ interface OrderItem {
 
 interface OrderForm {
   fullName: string;
+  email?: string;
   phone: string;
   deliveryAddress: string;
   specialInstructions: string;
@@ -55,6 +56,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [orderForm, setOrderForm] = useState<OrderForm>({
     fullName: "",
+    email: "",
     phone: "",
     deliveryAddress: "",
     specialInstructions: "",
@@ -90,6 +92,9 @@ export default function CheckoutPage() {
       } else {
         setIsNamePrefilled(false);
       }
+      if (session.user.email) {
+        setOrderForm((prev) => ({ ...prev, email: session!.user!.email as string }));
+      }
     };
 
     getSession();
@@ -116,6 +121,7 @@ export default function CheckoutPage() {
         .from("orders")
         .insert({
           user_id: user.id,
+          customer_email: orderForm.email,
           customer_name: orderForm.fullName,
           customer_phone: orderForm.phone,
           delivery_address: orderForm.deliveryAddress,
@@ -220,6 +226,18 @@ export default function CheckoutPage() {
                     readOnly={isNamePrefilled}
                     disabled={isNamePrefilled}
                     required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={orderForm.email || ""}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="Your Google email"
+                    readOnly
+                    disabled
                   />
                 </div>
                 <div>
