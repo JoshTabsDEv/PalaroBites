@@ -32,6 +32,21 @@ interface OrderForm {
   specialInstructions: string;
 }
 
+type UserMetadata = {
+  full_name?: string;
+  name?: string;
+  [key: string]: unknown;
+};
+
+type IdentityData = {
+  full_name?: string;
+  name?: string;
+};
+
+type SupabaseIdentity = {
+  identity_data?: IdentityData;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { state, getSubtotal, getDeliveryFee, getTotal, clearCart } = useCart();
@@ -64,9 +79,10 @@ export default function CheckoutPage() {
       }
 
       // Prefill full name from Google/Supabase user metadata (with fallbacks)
-      const md = session.user.user_metadata as Record<string, any> | undefined;
-      const identities = (session.user as any).identities as Array<any> | undefined;
-      const identityData = identities && identities[0] && identities[0].identity_data;
+      const md = session.user.user_metadata as UserMetadata | undefined;
+      const userWithIdentities = session.user as SupabaseUser & { identities?: SupabaseIdentity[] };
+      const identities = userWithIdentities.identities;
+      const identityData = identities && identities[0]?.identity_data;
       const googleName = md?.full_name || md?.name || identityData?.full_name || identityData?.name || "";
       if (googleName) {
         setOrderForm((prev) => ({ ...prev, fullName: googleName }));
