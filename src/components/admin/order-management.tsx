@@ -13,6 +13,7 @@ type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 
 
 interface OrderRow {
   id: string;
+  user_id: string;
   customer_name: string;
   customer_phone: string;
   total: number;
@@ -53,7 +54,7 @@ export default function OrderManagement() {
     setLoading(true);
     const { data, error } = await supabase
       .from('orders')
-      .select('id,customer_name,customer_phone,total,status,created_at')
+      .select('id,user_id,customer_name,customer_phone,total,status,created_at')
       .order('created_at', { ascending: false });
     if (!error && data) setOrders(data );
     setLoading(false);
@@ -75,6 +76,14 @@ export default function OrderManagement() {
   const updateStatus = async (id: string, status: OrderStatus) => {
     const { error } = await supabase.from('orders').update({ status }).eq('id', id);
     if (!error) setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+  };
+
+  const startChat = async (userId: string) => {
+    // Admin-initiated conversation unlocks user sending
+    await supabase
+      .from('conversations')
+      .upsert({ user_id: userId, admin_started: true }, { onConflict: 'user_id' });
+    window.open('/chat', '_blank');
   };
 
   return (
@@ -121,12 +130,13 @@ export default function OrderManagement() {
                   </div>
                   <div className="text-right w-full sm:w-auto">
                     <div className="text-lg font-semibold">₱{o.total.toFixed(2)}</div>
-                    <div className="mt-2 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 gap-2">
+                    <div className="mt-2 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'confirmed')}>Confirm</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'preparing')}>Preparing</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'out_for_delivery')}>Out</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'delivered')}>Delivered</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'cancelled')}>Cancel</Button>
+                      <Button variant="default" size="sm" onClick={() => startChat(o.user_id)}>Chat</Button>
                       <Button className="col-span-2 sm:col-span-1" variant="ghost" size="sm" onClick={() => window.open(`/order-success?orderId=${o.id}`, '_blank')}>
                         Details <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>

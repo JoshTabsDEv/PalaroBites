@@ -163,3 +163,37 @@ GRANT ALL ON products TO authenticated;
 GRANT ALL ON orders TO authenticated;
 GRANT ALL ON order_items TO authenticated;
 GRANT SELECT ON products_with_stores TO authenticated;
+
+-- Simple realtime chat (messages)
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated can read messages" ON messages
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Authenticated can insert own messages" ON messages
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+-- Conversations: admin must initiate before user can send
+CREATE TABLE IF NOT EXISTS conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  admin_started BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+
+-- Admins manage conversations (assume 'authenticated' admins via app logic)
+CREATE POLICY "Authenticated can read own conversation" ON conversations
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated can upsert own conversation" ON conversations
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
