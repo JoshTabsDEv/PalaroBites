@@ -49,13 +49,14 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       // today's revenue (sum total where created_at is today and status not cancelled)
       const start = new Date();
       start.setHours(0,0,0,0);
+      type RevenueRow = { total: number | null; status: string; created_at: string };
       const { data: revenueRows } = await supabase
         .from('orders')
         .select('total,status,created_at')
         .gte('created_at', start.toISOString());
-      const revenue = (revenueRows || [])
-        .filter(r => r.status !== 'cancelled')
-        .reduce((sum, r: any) => sum + Number(r.total || 0), 0);
+      const revenue = ((revenueRows as RevenueRow[]) || [])
+        .filter((r) => r.status !== 'cancelled')
+        .reduce((sum, r) => sum + Number(r.total ?? 0), 0);
       setTodaysRevenue(revenue);
 
       // recent activity: latest stores/products/orders
