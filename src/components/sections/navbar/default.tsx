@@ -83,12 +83,17 @@ export default function Navbar({
   }, [supabase.auth]);
 
   const handleSignOut = async () => {
-    // Use local scope to avoid server token revocation errors (session_not_found)
     try {
-      await supabase.auth.signOut({ scope: 'local' });
-    } catch {}
-    // Optional: navigate to home after signout
-    if (typeof window !== 'undefined') window.location.href = '/';
+      // Prefer global sign-out; if backend token is already invalid, fall back to local
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch {
+      try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
+    } finally {
+      if (typeof window !== 'undefined') {
+        // Force a full reload to clear any UI state
+        window.location.replace('/login');
+      }
+    }
   };
   return (
     <header className={cn("sticky top-0 z-50 -mb-4 px-4 pb-4", className)}>
