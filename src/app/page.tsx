@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Store, Package } from "lucide-react";
+ 
 import AddToCartButton from "@/components/cart/add-to-cart-button";
 
 interface Store {
@@ -145,6 +146,8 @@ export default function Home() {
     loadData();
   }, [supabase]);
 
+  
+
   const handleStoreSelect = (storeId: string) => {
     console.log(`Selected store: ${storeId}`);
     // In a real app, this would navigate to the store's menu page
@@ -174,6 +177,8 @@ export default function Home() {
     <div>
       <Navbar />
       <Hero />
+
+      
       
       {/* Store and Product Browser */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
