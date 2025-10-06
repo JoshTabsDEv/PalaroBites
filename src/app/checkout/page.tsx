@@ -44,6 +44,7 @@ export default function CheckoutPage() {
     deliveryAddress: "",
     specialInstructions: "",
   });
+  const [isNamePrefilled, setIsNamePrefilled] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -62,11 +63,16 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Prefill full name from Google user metadata
-      const metadata = session.user.user_metadata as Record<string, any> | undefined;
-      const googleName = metadata?.full_name || metadata?.name || "";
+      // Prefill full name from Google/Supabase user metadata (with fallbacks)
+      const md = session.user.user_metadata as Record<string, any> | undefined;
+      const identities = (session.user as any).identities as Array<any> | undefined;
+      const identityData = identities && identities[0] && identities[0].identity_data;
+      const googleName = md?.full_name || md?.name || identityData?.full_name || identityData?.name || "";
       if (googleName) {
         setOrderForm((prev) => ({ ...prev, fullName: googleName }));
+        setIsNamePrefilled(true);
+      } else {
+        setIsNamePrefilled(false);
       }
     };
 
@@ -195,8 +201,8 @@ export default function CheckoutPage() {
                     value={orderForm.fullName}
                     onChange={(e) => handleInputChange("fullName", e.target.value)}
                     placeholder="Enter your full name"
-                    readOnly
-                    disabled
+                    readOnly={isNamePrefilled}
+                    disabled={isNamePrefilled}
                     required
                   />
                 </div>
