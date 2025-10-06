@@ -44,7 +44,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({
-  logo = <img src="/logo.png" alt="Programmers Guild" className="h-8 w-8 md:h-10 md:w-10 mr-2" />,
+  logo = <img src="/logo.png" alt="Programmers Guild" className="h-8 w-8 md:h-20 md:w-20 mr-2" />,
   name = "",
   homeUrl = "/",
   mobileLinks = [
@@ -53,7 +53,7 @@ export default function Navbar({
     { text: "Profile", href: "/profile" },
   ],
   actions = [
-    { text: "Sign in", href: "/login", isButton: true, variant: "dark" },
+    { text: "Sign in", href: "/login", isButton: true, variant: "default" },
   ],
   showNavigation = true,
   customNavigation,

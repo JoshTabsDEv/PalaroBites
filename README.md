@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PalaroBites – Documentation
+
+PalaroBites is a campus food delivery web app built with Next.js (App Router), TypeScript, Shadcn UI, and Supabase.
+
+## Overview
+
+- Browse stores and products (with filters and search)
+- Add to cart and checkout (Cash on Delivery) with a flat ₱5 delivery fee
+- Orders page with receipts and status
+- Admin dashboard for stores, products, and orders
+- Auth via Supabase (OAuth supported)
+
+## Tech Stack
+
+- Next.js 14+ (App Router) · TypeScript
+- Tailwind CSS · Shadcn UI
+- Supabase (Auth, DB, SSR/Browser client)
+- Vercel (hosting)
 
 ## Getting Started
 
-First, run the development server:
+1) Install
 
 ```bash
+npm i
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2) Environment variables (create `.env.local`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_SUPABASE_URL= https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY= <anon_key>
+SUPABASE_SERVICE_ROLE_KEY= <service_role_key>
+NEXTAUTH_URL= http://localhost:3000
+NEXT_PUBLIC_SITE_URL= http://localhost:3000
+GOOGLE_CLIENT_ID= <optional>
+GOOGLE_CLIENT_SECRET= <optional>
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3) Database
 
-## Learn More
+- Run SQL from `database/schema.sql` then (optional) `database/seed.sql` in Supabase SQL editor
 
-To learn more about Next.js, take a look at the following resources:
+Tables:
+- `stores(id, name, description, image, rating, delivery_time, location, phone, is_open, categories[])`
+- `products(id, name, description, price, image, store_id, category, is_available)`
+- `orders(id, user_id, customer_name, customer_phone, delivery_address, subtotal, delivery_fee, total, status, payment_method, payment_status)`
+- `order_items(id, order_id, product_id, product_name, product_price, quantity, store_id, store_name)`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+RLS: Enabled for all tables with authenticated policies.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Development Notes
 
-## Deploy on Vercel
+- Client-only Supabase: `src/lib/supabase-client.ts`
+- Server/SSR usage: `src/lib/supabase.ts` (cookies)
+- Auth route: `src/app/api/[...nextauth]/route.ts`
+- UI components: `src/components/ui/*`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Key Pages
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/` – Home (stores/products, search, filters)
+- `/login` – Login + intro modal
+- `/orders` – My Orders list
+- `/order-success` – Receipt page
+- `/admin` – Admin Dashboard
+- `/terms`, `/privacy`, `/about` – Legal & info pages
+
+## Admin
+
+- Stores: add/edit/delete, toggle open/closed
+- Products: add/edit/delete, toggle availability
+- Orders: filter by status, update status (confirmed, preparing, out_for_delivery, delivered, cancelled)
+
+## Deployment (Vercel)
+
+Set env vars (Preview + Production):
+
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+NEXTAUTH_URL=https://<your-domain>
+NEXT_PUBLIC_SITE_URL=https://<your-domain>
+```
+
+For Google OAuth, add callback URL: `https://<your-domain>/api/auth/callback/google`.
+
+## Troubleshooting
+
+- Logout errors (`session_not_found`): set env vars; the app falls back to local sign-out.
+- “No API key found”: missing `NEXT_PUBLIC_SUPABASE_*` envs.
+- Turbopack import errors: mark client files with `"use client"` and avoid server-only imports in client components.
+
+## License
+
+MIT (add a LICENSE file if needed).

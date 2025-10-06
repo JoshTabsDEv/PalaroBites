@@ -35,34 +35,24 @@ export default function FooterSection({
   logo = <img src="/logo.png" alt="Programmers Guild" className="w-10 h-10" />,
   name = "Programmers Guild",
   columns = [
+   
     {
-      title: "Product",
+      title: "About",
       links: [
-        { text: "Changelog", href: "https://www.launchuicomponents.com/" },
-        { text: "Documentation", href: "https://www.launchuicomponents.com/" },
-      ],
-    },
-    {
-      title: "Company",
-      links: [
-        { text: "About", href: "https://www.launchuicomponents.com/" },
-        { text: "Careers", href: "https://www.launchuicomponents.com/" },
-        { text: "Blog", href: "https://www.launchuicomponents.com/" },
+        { text: "About", href: "/about" },
       ],
     },
     {
       title: "Contact",
       links: [
-        { text: "Discord", href: "" },
-        { text: "Twitter", href: "" },
-        { text: "Github", href: "" },
+        { text: "Facebook", href: "https://www.facebook.com/cec.programmersguild" },
       ],
     },
   ],
   copyright = "© 2025 Programmers Guild. All rights reserved",
   policies = [
-    { text: "Privacy Policy", href: "" },
-    { text: "Terms of Service", href: "" },
+    { text: "Privacy Policy", href: "/privacy" },
+    { text: "Terms of Service", href: "/terms" },
   ],
   showModeToggle = true,
   className,

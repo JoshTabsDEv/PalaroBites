@@ -132,7 +132,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const getDeliveryFee = () => {
-    return state.items.length > 0 ? 5 : 0; // Fixed 5 peso delivery fee
+    // Base delivery fee
+    const BASE_FEE = 5;
+    // Extra fee per every 4 items beyond the first 4 (changeable as needed)
+    const EXTRA_PER_FOUR = 1;
+
+    const totalQty = getTotalItems();
+    if (totalQty === 0) return 0;
+    if (totalQty <= 4) return BASE_FEE;
+
+    const extraGroups = Math.floor((totalQty - 4) / 4) + 1; // 5-8 =>1, 9-12=>2, etc.
+    return BASE_FEE + EXTRA_PER_FOUR * extraGroups;
   };
 
   const getTotal = () => {
