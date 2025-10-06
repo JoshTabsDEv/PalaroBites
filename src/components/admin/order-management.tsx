@@ -55,7 +55,7 @@ export default function OrderManagement() {
       .from('orders')
       .select('id,customer_name,customer_phone,total,status,created_at')
       .order('created_at', { ascending: false });
-    if (!error && data) setOrders(data as any);
+    if (!error && data) setOrders(data );
     setLoading(false);
   };
 
@@ -91,7 +91,7 @@ export default function OrderManagement() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input placeholder="Search by name, phone, or order ID" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as OrderStatus | 'all')}>
           <SelectTrigger>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
