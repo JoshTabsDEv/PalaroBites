@@ -18,7 +18,7 @@ export default function LoginPage() {
   }, []);
 
   const introSteps: { title: string; desc: string }[] = [
-    { title: "Welcome to PalaroBites", desc: "Browse verified campus stores and order with a flat ₱5 delivery fee." },
+    { title: "Welcome to PalaroBites", desc: "Browse verified campus stores. Delivery starts at ₱5, plus ₱2 for every additional 4 items." },
     { title: "Add to Cart", desc: "Tap Add to Cart on any product. Edit quantities from the cart in the header." },
     { title: "Cash on Delivery", desc: "Checkout and pay in cash. Track your order in My Orders—your rider will call on arrival." },
   ];

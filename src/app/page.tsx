@@ -149,8 +149,13 @@ export default function Home() {
   
 
   const handleStoreSelect = (storeId: string) => {
-    console.log(`Selected store: ${storeId}`);
-    // In a real app, this would navigate to the store's menu page
+    // Switch to products view and filter by the selected store
+    setShowProducts(true);
+    setSelectedStore(storeId);
+    // Optional: scroll to products section
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const filteredProducts = products.filter(product => {

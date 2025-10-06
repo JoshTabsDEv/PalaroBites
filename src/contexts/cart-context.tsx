@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useReducer, ReactNode } from 'react';
+import { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 
 interface CartItem {
   id: string;
@@ -94,10 +94,34 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 };
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, {
-    items: [],
-    isOpen: false,
-  });
+  const STORAGE_KEY = 'palaro_cart_v1';
+
+  const getInitialState = (): CartState => {
+    if (typeof window === 'undefined') {
+      return { items: [], isOpen: false };
+    }
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<CartState>;
+        return {
+          items: Array.isArray(parsed.items) ? parsed.items as CartItem[] : [],
+          isOpen: Boolean(parsed.isOpen),
+        };
+      }
+    } catch {}
+    return { items: [], isOpen: false };
+  };
+
+  const [state, dispatch] = useReducer(cartReducer, undefined as unknown as CartState, getInitialState);
+
+  // Persist cart to localStorage so it survives redirects/login
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items, isOpen: state.isOpen }));
+    } catch {}
+  }, [state.items, state.isOpen]);
 
   const addItem = (item: Omit<CartItem, 'quantity'>) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
