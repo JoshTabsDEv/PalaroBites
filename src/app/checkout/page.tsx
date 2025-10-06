@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/cart-context";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
-import { User } from "@supabase/supabase-js";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, MapPin, Phone, User, CreditCard, Clock } from "lucide-react";
+import { CheckCircle, MapPin, Phone, User as UserIcon, CreditCard, Clock } from "lucide-react";
 import Image from "next/image";
 
 interface OrderItem {
@@ -35,7 +35,7 @@ interface OrderForm {
 export default function CheckoutPage() {
   const router = useRouter();
   const { state, getSubtotal, getDeliveryFee, getTotal, clearCart } = useCart();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [orderForm, setOrderForm] = useState<OrderForm>({
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <UserIcon className="h-5 w-5" />
                   Delivery Information
                 </CardTitle>
                 <CardDescription>
