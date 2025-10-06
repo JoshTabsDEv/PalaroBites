@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,6 +128,7 @@ export default function OrderSuccessPage() {
   };
 
   return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div><p className="mt-4 text-gray-600">Loading order...</p></div></div>}>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Header */}
@@ -277,5 +278,6 @@ export default function OrderSuccessPage() {
         </div>
       </div>
     </div>
+    </Suspense>
   );
 }
