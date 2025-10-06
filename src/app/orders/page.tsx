@@ -104,7 +104,7 @@ export default function OrdersPage() {
                     <div className="text-right">
                       <div className="text-lg font-semibold">₱{order.total.toFixed(2)}</div>
                       <Button className="mt-2" variant="outline" onClick={() => router.push(`/order-success?orderId=${order.id}`)}>
-                        View Details <ArrowRight className="h-4 w-4 ml-2" />
+                        View Order <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>
                     </div>
                   </div>
