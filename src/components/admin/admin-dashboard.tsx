@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       setTodaysRevenue(revenue);
 
       // recent activity: latest stores/products/orders
+      type StoreRecentRow = { name: string; updated_at: string | null; created_at: string };
+      type ProductRecentRow = { name: string; updated_at: string | null; created_at: string };
+      type OrderRecentRow = { customer_name: string; total: number | null; created_at: string };
       const [storesRecent, productsRecent, ordersRecent] = await Promise.all([
         supabase.from('stores').select('name,updated_at,created_at').order('updated_at', { ascending: false }).limit(5),
         supabase.from('products').select('name,updated_at,created_at').order('updated_at', { ascending: false }).limit(5),
@@ -66,16 +69,17 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       ]);
       const items: Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string; ts: string }> = [];
       if (storesRecent.data) {
-        storesRecent.data.forEach((s: any) => items.push({ kind: 'Store', title: `${s.name} updated`, when: new Date(s.updated_at || s.created_at).toLocaleString(), ts: s.updated_at || s.created_at }));
+        (storesRecent.data as StoreRecentRow[]).forEach((s) => items.push({ kind: 'Store', title: `${s.name} updated`, when: new Date(s.updated_at || s.created_at).toLocaleString(), ts: (s.updated_at || s.created_at) }));
       }
       if (productsRecent.data) {
-        productsRecent.data.forEach((p: any) => items.push({ kind: 'Product', title: `New/updated product: ${p.name}`, when: new Date(p.updated_at || p.created_at).toLocaleString(), ts: p.updated_at || p.created_at }));
+        (productsRecent.data as ProductRecentRow[]).forEach((p) => items.push({ kind: 'Product', title: `New/updated product: ${p.name}`, when: new Date(p.updated_at || p.created_at).toLocaleString(), ts: (p.updated_at || p.created_at) }));
       }
       if (ordersRecent.data) {
-        ordersRecent.data.forEach((o: any) => items.push({ kind: 'Order', title: `Order from ${o.customer_name} • ₱${Number(o.total||0).toFixed(2)}`, when: new Date(o.created_at).toLocaleString(), ts: o.created_at }));
+        (ordersRecent.data as OrderRecentRow[]).forEach((o) => items.push({ kind: 'Order', title: `Order from ${o.customer_name} • ₱${Number(o.total||0).toFixed(2)}`, when: new Date(o.created_at).toLocaleString(), ts: o.created_at }));
       }
       items.sort((a,b) => (new Date(b.ts).getTime() - new Date(a.ts).getTime()));
-      setActivity(items.slice(0,6).map(({ ts, ...rest }) => rest));
+      const trimmed = items.slice(0,6).map((i) => ({ kind: i.kind, title: i.title, when: i.when }));
+      setActivity(trimmed);
     };
     loadStats();
   }, [supabase]);

@@ -37,7 +37,7 @@ export default function OrdersPage() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (!error && data) setOrders(data as any);
+      if (!error && data) setOrders(data as OrderListItem[]);
       setLoading(false);
     };
     loadOrders();

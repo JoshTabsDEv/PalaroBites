@@ -12,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Store, Package } from "lucide-react";
-import CartSidebar from "@/components/cart/cart-sidebar";
+import { Search, Store, Package } from "lucide-react";
 import AddToCartButton from "@/components/cart/add-to-cart-button";
 
 interface Store {
@@ -40,6 +39,32 @@ interface Product {
   category: string;
   isAvailable: boolean;
 }
+
+// Supabase row types
+type StoreRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  image: string | null;
+  rating: number | null;
+  delivery_time: string | null;
+  location: string | null;
+  phone: string | null;
+  is_open: boolean | null;
+  categories: string[] | null;
+};
+
+type ProductRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  image: string | null;
+  store_id: string;
+  category: string | null;
+  is_available: boolean | null;
+  stores?: { name: string } | { name: string }[] | null;
+};
 
 export default function Home() {
   const [stores, setStores] = useState<Store[]>([]);
@@ -72,15 +97,16 @@ export default function Home() {
       if (storeError) {
         console.error("Error loading stores:", storeError);
       } else {
-        const mappedStores: Store[] = (storeData || []).map((s: any) => ({
+        const rows = (storeData || []) as StoreRow[];
+        const mappedStores: Store[] = rows.map((s) => ({
           id: s.id,
           name: s.name,
-          description: s.description || "",
-          image: s.image || "/logo.png",
-          rating: Number(s.rating || 0),
-          deliveryTime: s.delivery_time || "",
-          location: s.location || "",
-          phone: s.phone || "",
+          description: s.description ?? "",
+          image: s.image ?? "/logo.png",
+          rating: Number(s.rating ?? 0),
+          deliveryTime: s.delivery_time ?? "",
+          location: s.location ?? "",
+          phone: s.phone ?? "",
           isOpen: Boolean(s.is_open),
           categories: Array.isArray(s.categories) ? s.categories : [],
         }));
@@ -97,16 +123,17 @@ export default function Home() {
       if (productError) {
         console.error("Error loading products:", productError);
       } else {
-        const getStoreName = (s: any) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
-        const mappedProducts: Product[] = (productData || []).map((p: any) => ({
+        const getStoreName = (s: ProductRow["stores"]) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
+        const rows = (productData || []) as ProductRow[];
+        const mappedProducts: Product[] = rows.map((p) => ({
           id: p.id,
           name: p.name,
-          description: p.description || "",
-          price: Number(p.price || 0),
-          image: p.image || "/logo.png",
+          description: p.description ?? "",
+          price: Number(p.price ?? 0),
+          image: p.image ?? "/logo.png",
           storeId: p.store_id,
           storeName: getStoreName(p.stores),
-          category: p.category || "",
+          category: p.category ?? "",
           isAvailable: Boolean(p.is_available),
         }));
         setProducts(mappedProducts);

@@ -54,15 +54,28 @@ export default function StoreManagement() {
       if (error) {
         setError(error.message);
       } else {
-        const mapped: Store[] = (data || []).map((s: any) => ({
+        type StoreRow = {
+          id: string;
+          name: string;
+          description: string | null;
+          image: string | null;
+          rating: number | null;
+          delivery_time: string | null;
+          location: string | null;
+          phone: string | null;
+          is_open: boolean | null;
+          categories: string[] | null;
+        };
+        const rows = (data || []) as StoreRow[];
+        const mapped: Store[] = rows.map((s) => ({
           id: s.id,
           name: s.name,
-          description: s.description || "",
-          image: s.image || "/logo.png",
-          rating: Number(s.rating || 0),
-          deliveryTime: s.delivery_time || "",
-          location: s.location || "",
-          phone: s.phone || "",
+          description: s.description ?? "",
+          image: s.image ?? "/logo.png",
+          rating: Number(s.rating ?? 0),
+          deliveryTime: s.delivery_time ?? "",
+          location: s.location ?? "",
+          phone: s.phone ?? "",
           isOpen: Boolean(s.is_open),
           categories: Array.isArray(s.categories) ? s.categories : [],
         }));

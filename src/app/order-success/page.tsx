@@ -259,7 +259,7 @@ export default function OrderSuccessPage() {
                 <strong>Estimated Delivery Time:</strong> 15-30 minutes after order confirmation
               </p>
               <p className="text-sm text-blue-700 mt-2">
-                You will receive a call from the delivery person when they're on their way.
+                You will receive a call from the delivery person when they&apos;re on their way.
               </p>
             </div>
           </CardContent>
