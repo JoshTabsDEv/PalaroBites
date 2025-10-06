@@ -2,12 +2,14 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Apple from 'next-auth/providers/apple';
 import { SupabaseAdapter } from '@auth/supabase-adapter';
-import { createSupabaseServerClient} from '@/lib/supabase';
 
-const supabase = createSupabaseServerClient();
-
+// Note: NextAuth route handlers don't need to re-export from '@/auth'
+// Ensure the adapter receives a client instance or proper config per your adapter version
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: SupabaseAdapter(supabase),
+  adapter: SupabaseAdapter({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  }),
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -25,4 +27,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 });
 
-export { auth as GET, auth as POST } from '@/auth';
+export const { GET, POST } = handlers;
