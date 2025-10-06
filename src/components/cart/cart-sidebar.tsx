@@ -38,7 +38,7 @@ export default function CartSidebar() {
               Cart ({getTotalItems()})
             </SheetTitle>
             <Button variant="ghost" size="sm" onClick={closeCart}>
-              <X className="h-4 w-4" />
+            
             </Button>
           </div>
         </SheetHeader>

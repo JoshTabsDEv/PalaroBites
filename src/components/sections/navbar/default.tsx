@@ -44,8 +44,8 @@ interface NavbarProps {
 }
 
 export default function Navbar({
-  logo = <LaunchUI />,
-  name = "PalaroBites",
+  logo = <img src="/logo.png" alt="Programmers Guild" className="w-30 h-30  mr-2" />,
+  name = "",
   homeUrl = "/",
   mobileLinks = [
     { text: "Stores", href: "/" },
@@ -53,13 +53,7 @@ export default function Navbar({
     { text: "Profile", href: "/profile" },
   ],
   actions = [
-    { text: "Sign in", href: "/login", isButton: false },
-    {
-      text: "Get Started",
-      href: "/login",
-      isButton: true,
-      variant: "dark",
-    },
+    { text: "Sign in", href: "/login", isButton: true, variant: "dark" },
   ],
   showNavigation = true,
   customNavigation,
@@ -110,7 +104,7 @@ export default function Navbar({
             {loading ? (
               <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
             ) : user ? (
-              <div className="desktop-only flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <CartButton />
                 <Button asChild variant="outline" size="sm">
                   <a href="/orders">My Orders</a>
@@ -130,7 +124,7 @@ export default function Navbar({
                 </Button>
               </div>
             ) : (
-              <div className="desktop-only flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <CartButton />
                 {actions.map((action, index) =>
                   action.isButton ? (
@@ -146,11 +140,11 @@ export default function Navbar({
                       </a>
                     </Button>
                   ) : (
-                    <a
-                      key={index}
-                      href={action.href}
-                      className="hidden text-sm md:block"
-                    >
+                  <a
+                    key={index}
+                    href={action.href}
+                    className="text-sm"
+                  >
                       {action.text}
                     </a>
                   ),

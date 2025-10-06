@@ -32,8 +32,8 @@ interface FooterProps {
 }
 
 export default function FooterSection({
-  logo = <LaunchUI />,
-  name = "PalaroBites",
+  logo = <img src="/logo.png" alt="Programmers Guild" className="w-10 h-10" />,
+  name = "Programmers Guild",
   columns = [
     {
       title: "Product",
