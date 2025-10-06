@@ -110,7 +110,7 @@ export default function Navbar({
             {loading ? (
               <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
             ) : user ? (
-              <div className="flex items-center gap-3">
+              <div className="desktop-only flex items-center gap-3">
                 <CartButton />
                 <Button asChild variant="outline" size="sm">
                   <a href="/orders">My Orders</a>
@@ -130,7 +130,7 @@ export default function Navbar({
                 </Button>
               </div>
             ) : (
-              <>
+              <div className="desktop-only flex items-center gap-3">
                 <CartButton />
                 {actions.map((action, index) =>
                   action.isButton ? (
@@ -155,59 +155,9 @@ export default function Navbar({
                     </a>
                   ),
                 )}
-              </>
+              </div>
             )}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 md:hidden"
-                >
-                  <Menu className="size-5" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right">
-                <nav className="grid gap-6 text-lg font-medium">
-                  <a
-                    href={homeUrl}
-                    className="flex items-center gap-2 text-xl font-bold"
-                  >
-                    <span>{name}</span>
-                  </a>
-                  
-                  {user && (
-                    <div className="border-b pb-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <User className="w-4 h-4" />
-                        <span>{user.email}</span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {mobileLinks.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.href}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      {link.text}
-                    </a>
-                  ))}
-                  
-                  {user && (
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center gap-2 text-red-600 hover:text-red-700 text-left"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  )}
-                </nav>
-              </SheetContent>
-            </Sheet>
+            {/* Hamburger menu removed for mobile */}
           </NavbarRight>
         </NavbarComponent>
       </div>

@@ -53,16 +53,16 @@ export default function FooterSection({
     {
       title: "Contact",
       links: [
-        { text: "Discord", href: "https://www.launchuicomponents.com/" },
-        { text: "Twitter", href: "https://www.launchuicomponents.com/" },
-        { text: "Github", href: "https://www.launchuicomponents.com/" },
+        { text: "Discord", href: "" },
+        { text: "Twitter", href: "" },
+        { text: "Github", href: "" },
       ],
     },
   ],
-  copyright = "© 2025 Mikołaj Dobrucki. All rights reserved",
+  copyright = "© 2025 Programmers Guild. All rights reserved",
   policies = [
-    { text: "Privacy Policy", href: "https://www.launchuicomponents.com/" },
-    { text: "Terms of Service", href: "https://www.launchuicomponents.com/" },
+    { text: "Privacy Policy", href: "" },
+    { text: "Terms of Service", href: "" },
   ],
   showModeToggle = true,
   className,

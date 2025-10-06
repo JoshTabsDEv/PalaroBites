@@ -2,6 +2,10 @@
 @import "../styles/utils.css";
 
 @import "tw-animate-css";
+/* in globals.css or a shared CSS file */
+@media (max-width: 767px) {
+  .desktop-only { display: none !important; }
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
 
