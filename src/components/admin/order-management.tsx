@@ -110,7 +110,7 @@ export default function OrderManagement() {
           {filtered.map((o) => (
             <Card key={o.id}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">Order #{o.id.slice(-8)}</span>
@@ -119,15 +119,15 @@ export default function OrderManagement() {
                     <div className="text-sm text-gray-700 mt-1 truncate">{o.customer_name} • {o.customer_phone}</div>
                     <div className="text-xs text-gray-500">{new Date(o.created_at).toLocaleString()}</div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right w-full sm:w-auto">
                     <div className="text-lg font-semibold">₱{o.total.toFixed(2)}</div>
-                    <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="mt-2 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 gap-2">
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'confirmed')}>Confirm</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'preparing')}>Preparing</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'out_for_delivery')}>Out</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'delivered')}>Delivered</Button>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(o.id, 'cancelled')}>Cancel</Button>
-                      <Button variant="ghost" size="sm" onClick={() => window.open(`/order-success?orderId=${o.id}`, '_blank')}>
+                      <Button className="col-span-2 sm:col-span-1" variant="ghost" size="sm" onClick={() => window.open(`/order-success?orderId=${o.id}`, '_blank')}>
                         Details <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>
                     </div>
