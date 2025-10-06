@@ -61,6 +61,13 @@ export default function CheckoutPage() {
         router.push('/');
         return;
       }
+
+      // Prefill full name from Google user metadata
+      const metadata = session.user.user_metadata as Record<string, any> | undefined;
+      const googleName = metadata?.full_name || metadata?.name || "";
+      if (googleName) {
+        setOrderForm((prev) => ({ ...prev, fullName: googleName }));
+      }
     };
 
     getSession();
@@ -188,6 +195,8 @@ export default function CheckoutPage() {
                     value={orderForm.fullName}
                     onChange={(e) => handleInputChange("fullName", e.target.value)}
                     placeholder="Enter your full name"
+                    readOnly
+                    disabled
                     required
                   />
                 </div>
