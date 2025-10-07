@@ -128,7 +128,7 @@ export default function Home() {
           //   .eq("is_available", true)
           //   .order("name", { ascending: true })
           //   .limit(120)
-          supabase.from("products").select("id,name,store_id,stores(name)").limit(120)
+          supabase.from("products").select("id,name,store_id,stores(name)").limit(20).eq("is_available", true).order("name", { ascending: true })
 
         ]);
 
