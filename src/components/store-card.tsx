@@ -34,6 +34,11 @@ export function StoreCard({ store, onSelect }: StoreCardProps) {
             alt={store.name}
             fill
             className="object-cover rounded-t-lg"
+            loading="lazy"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/logo.png";
+            }}
           />
           <div className="absolute top-2 right-2">
             <Badge variant={store.isOpen ? "default" : "secondary"}>

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Store, Package } from "lucide-react";
+import { StoreCardSkeleton, ProductCardSkeleton } from "@/components/ui/loading-skeleton";
  
 import AddToCartButton from "@/components/cart/add-to-cart-button";
 
@@ -89,59 +90,65 @@ export default function Home() {
     const loadData = async () => {
       setLoading(true);
       
-      // Load stores
-      const { data: storeData, error: storeError } = await supabase
-        .from("stores")
-        .select("id,name,description,image,rating,delivery_time,location,phone,is_open,categories")
-        .eq("is_open", true)
-        .order("name", { ascending: true });
+      try {
+        // Load both stores and products in parallel for better performance
+        const [storesResult, productsResult] = await Promise.all([
+          supabase
+            .from("stores")
+            .select("id,name,description,image,rating,delivery_time,location,phone,is_open,categories")
+            .eq("is_open", true)
+            .order("name", { ascending: true }),
+          supabase
+            .from("products")
+            .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
+            .eq("is_available", true)
+            .order("name", { ascending: true })
+        ]);
 
-      if (storeError) {
-        console.error("Error loading stores:", storeError);
-      } else {
-        const rows = (storeData || []) as StoreRow[];
-        const mappedStores: Store[] = rows.map((s) => ({
-          id: s.id,
-          name: s.name,
-          description: s.description ?? "",
-          image: s.image ?? "/logo.png",
-          rating: Number(s.rating ?? 0),
-          deliveryTime: s.delivery_time ?? "",
-          location: s.location ?? "",
-          phone: s.phone ?? "",
-          isOpen: Boolean(s.is_open),
-          categories: Array.isArray(s.categories) ? s.categories : [],
-        }));
-        setStores(mappedStores);
+        // Process stores data
+        if (storesResult.error) {
+          console.error("Error loading stores:", storesResult.error);
+        } else {
+          const rows = (storesResult.data || []) as StoreRow[];
+          const mappedStores: Store[] = rows.map((s) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description ?? "",
+            image: s.image ?? "/logo.png",
+            rating: Number(s.rating ?? 0),
+            deliveryTime: s.delivery_time ?? "",
+            location: s.location ?? "",
+            phone: s.phone ?? "",
+            isOpen: Boolean(s.is_open),
+            categories: Array.isArray(s.categories) ? s.categories : [],
+          }));
+          setStores(mappedStores);
+        }
+
+        // Process products data
+        if (productsResult.error) {
+          console.error("Error loading products:", productsResult.error);
+        } else {
+          const getStoreName = (s: ProductRow["stores"]) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
+          const rows = (productsResult.data || []) as ProductRow[];
+          const mappedProducts: Product[] = rows.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description ?? "",
+            price: Number(p.price ?? 0),
+            image: p.image ?? "/logo.png",
+            storeId: p.store_id,
+            storeName: getStoreName(p.stores),
+            category: p.category ?? "",
+            isAvailable: Boolean(p.is_available),
+          }));
+          setProducts(mappedProducts);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        setLoading(false);
       }
-
-      // Load products
-      const { data: productData, error: productError } = await supabase
-        .from("products")
-        .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
-        .eq("is_available", true)
-        .order("name", { ascending: true });
-
-      if (productError) {
-        console.error("Error loading products:", productError);
-      } else {
-        const getStoreName = (s: ProductRow["stores"]) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
-        const rows = (productData || []) as ProductRow[];
-        const mappedProducts: Product[] = rows.map((p) => ({
-          id: p.id,
-          name: p.name,
-          description: p.description ?? "",
-          price: Number(p.price ?? 0),
-          image: p.image ?? "/logo.png",
-          storeId: p.store_id,
-          storeName: getStoreName(p.stores),
-          category: p.category ?? "",
-          isAvailable: Boolean(p.is_available),
-        }));
-        setProducts(mappedProducts);
-      }
-
-      setLoading(false);
     };
 
     loadData();
@@ -218,13 +225,20 @@ export default function Home() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {stores.map((store) => (
-                <StoreCard
-                  key={store.id}
-                  store={store}
-                  onSelect={handleStoreSelect}
-                />
-              ))}
+              {loading ? (
+                // Show skeleton loading for stores
+                Array.from({ length: 8 }).map((_, index) => (
+                  <StoreCardSkeleton key={index} />
+                ))
+              ) : (
+                stores.map((store) => (
+                  <StoreCard
+                    key={store.id}
+                    store={store}
+                    onSelect={handleStoreSelect}
+                  />
+                ))
+              )}
             </div>
           </div>
         ) : (
@@ -278,11 +292,17 @@ export default function Home() {
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
+              {loading ? (
+                // Show skeleton loading for products
+                Array.from({ length: 12 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))
+              ) : (
+                filteredProducts.map((product) => (
                 <Card key={product.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <CardTitle className="text-lg">{product.name}</CardTitle>
                         <CardDescription className="text-sm">{product.description}</CardDescription>
                       </div>
@@ -290,6 +310,20 @@ export default function Home() {
                         {product.category}
                       </Badge>
                     </div>
+                    {/* Product Image Preview */}
+                    {product.image && product.image !== "/logo.png" && (
+                      <div className="mt-3 w-full h-32 border rounded-lg overflow-hidden bg-gray-50">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center text-sm text-gray-600">
@@ -321,7 +355,8 @@ export default function Home() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
 
             {filteredProducts.length === 0 && (

@@ -331,6 +331,7 @@ export default function ProductManagement() {
                       src={product.image}
                       alt={product.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
