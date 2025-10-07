@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { Plus, Edit, Trash2, MapPin, Clock, Star, Phone, Eye, EyeOff } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 
@@ -228,6 +229,14 @@ export default function StoreManagement() {
                   placeholder="Enter store description"
                 />
               </div>
+              <div>
+                <ImageUpload
+                  value={newStore.image}
+                  onChange={(value) => setNewStore({...newStore, image: value})}
+                  label="Store Image"
+                  placeholder="Enter image URL or upload a file"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="location">Location</Label>
@@ -268,7 +277,7 @@ export default function StoreManagement() {
           <Card key={store.id}>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1">
                   <CardTitle className="text-lg">{store.name}</CardTitle>
                   <CardDescription className="text-sm">{store.description}</CardDescription>
                 </div>
@@ -276,6 +285,19 @@ export default function StoreManagement() {
                   {store.isOpen ? "Open" : "Closed"}
                 </Badge>
               </div>
+              {/* Store Image Preview */}
+              {store.image && store.image !== "/logo.png" && (
+                <div className="mt-3 w-full h-32 border rounded-lg overflow-hidden bg-gray-50">
+                  <img
+                    src={store.image}
+                    alt={store.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
@@ -369,6 +391,14 @@ export default function StoreManagement() {
                   id="edit-description"
                   value={editingStore.description}
                   onChange={(e) => setEditingStore({...editingStore, description: e.target.value})}
+                />
+              </div>
+              <div>
+                <ImageUpload
+                  value={editingStore.image}
+                  onChange={(value) => setEditingStore({...editingStore, image: value})}
+                  label="Store Image"
+                  placeholder="Enter image URL or upload a file"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">

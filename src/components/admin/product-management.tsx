@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, DollarSign, Package } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
@@ -226,6 +227,14 @@ export default function ProductManagement() {
                   placeholder="Enter product description"
                 />
               </div>
+              <div>
+                <ImageUpload
+                  value={newProduct.image}
+                  onChange={(value) => setNewProduct({...newProduct, image: value})}
+                  label="Product Image"
+                  placeholder="Enter image URL or upload a file"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="store">Store</Label>
@@ -278,7 +287,7 @@ export default function ProductManagement() {
           <Card key={product.id}>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1">
                   <CardTitle className="text-lg">{product.name}</CardTitle>
                   <CardDescription className="text-sm">{product.description}</CardDescription>
                 </div>
@@ -286,6 +295,19 @@ export default function ProductManagement() {
                   {product.isAvailable ? "Available" : "Unavailable"}
                 </Badge>
               </div>
+              {/* Product Image Preview */}
+              {product.image && product.image !== "/logo.png" && (
+                <div className="mt-3 w-full h-32 border rounded-lg overflow-hidden bg-gray-50">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
@@ -370,6 +392,14 @@ export default function ProductManagement() {
                   id="edit-description"
                   value={editingProduct.description}
                   onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})}
+                />
+              </div>
+              <div>
+                <ImageUpload
+                  value={editingProduct.image}
+                  onChange={(value) => setEditingProduct({...editingProduct, image: value})}
+                  label="Product Image"
+                  placeholder="Enter image URL or upload a file"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
