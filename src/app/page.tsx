@@ -425,29 +425,20 @@ export default function Home() {
                     </div>
                     {/* Product Image Preview */}
                     {product.image && product.image !== "/logo.png" && (
-                      <div className="mt-3 relative group">
+                      <div className="mt-3">
                         <div 
-                          className="w-full h-32 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:shadow-md transition-all duration-200 active:scale-[0.98]"
+                          className="w-full h-32 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
                           onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
                         >
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                            className="w-full h-full object-cover"
                             loading="lazy"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
                             }}
                           />
-                          {/* Professional overlay */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
-                                <Eye className="h-3 w-3 inline mr-1" />
-                                View Full Size
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       </div>
                     )}
