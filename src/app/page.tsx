@@ -429,7 +429,7 @@ export default function Home() {
                     {product.image && product.image !== "/logo.png" && (
                       <div className="mt-3 relative group">
                         <div 
-                          className="w-full h-32 border rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                          className="relative w-full h-32 border rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
                           onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
                         >
                           <Image
