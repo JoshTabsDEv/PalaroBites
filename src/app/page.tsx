@@ -122,12 +122,14 @@ export default function Home() {
             .select("id,name,description,image,rating,delivery_time,location,phone,is_open,categories")
             .eq("is_open", true)
             .order("name", { ascending: true }),
-          supabase
-            .from("products")
-            .select("id,name,description,price,image,store_id,category,is_available")
-            .eq("is_available", true)
-            .order("name", { ascending: true })
-            .limit(120)
+          // supabase
+          //   .from("products")
+          //   .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
+          //   .eq("is_available", true)
+          //   .order("name", { ascending: true })
+          //   .limit(120)
+          supabase.from("products").select("id,name,store_id,stores(name)").limit(120)
+
         ]);
 
         // Process stores data
@@ -148,15 +150,13 @@ export default function Home() {
             categories: Array.isArray(s.categories) ? s.categories : [],
           }));
           setStores(mappedStores);
-          
-          // Build a lookup for store names used when mapping products
-          const storeIdToName = new Map<string, string>(rows.map((s) => [s.id, s.name]));
         }
 
         // Process products data
         if (productsResult.error) {
           console.error("Error loading products:", productsResult.error);
         } else {
+          const getStoreName = (s: ProductRow["stores"]) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
           const rows = (productsResult.data || []) as ProductRow[];
           const mappedProducts: Product[] = rows.map((p) => ({
             id: p.id,
@@ -165,7 +165,7 @@ export default function Home() {
             price: Number(p.price ?? 0),
             image: p.image ?? "/logo.png",
             storeId: p.store_id,
-            storeName: (typeof storeIdToName !== 'undefined' ? (storeIdToName.get(p.store_id) || "") : ""),
+            storeName: getStoreName(p.stores),
             category: p.category ?? "",
             isAvailable: Boolean(p.is_available),
           }));
