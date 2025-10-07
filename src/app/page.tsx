@@ -88,7 +88,7 @@ export default function Home() {
     title: ""
   });
   const storesPerPage = 3;
-  const productsPerPage = 12;
+  const productsPerPage = 6;
   const supabase = createSupabaseBrowserClient();
   const productsSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -139,7 +139,7 @@ export default function Home() {
             id: s.id,
             name: s.name,
             description: s.description ?? "",
-            image: "/logo.png",
+            image: s.image ?? "/logo.png",
             rating: Number(s.rating ?? 0),
             deliveryTime: s.delivery_time ?? "",
             location: s.location ?? "",
@@ -161,7 +161,7 @@ export default function Home() {
             name: p.name,
             description: p.description ?? "",
             price: Number(p.price ?? 0),
-            image: "/logo.png",
+            image: p.image ?? "/logo.png",
             storeId: p.store_id,
             storeName: getStoreName(p.stores),
             category: p.category ?? "",
