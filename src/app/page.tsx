@@ -150,7 +150,7 @@ export default function Home() {
           setStores(mappedStores);
           
           // Build a lookup for store names used when mapping products
-          var storeIdToName = new Map<string, string>(rows.map((s) => [s.id, s.name]));
+          const storeIdToName = new Map<string, string>(rows.map((s) => [s.id, s.name]));
         }
 
         // Process products data
