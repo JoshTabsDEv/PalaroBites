@@ -122,14 +122,12 @@ export default function Home() {
             .select("id,name,description,image,rating,delivery_time,location,phone,is_open,categories")
             .eq("is_open", true)
             .order("name", { ascending: true }),
-          // supabase
-          //   .from("products")
-          //   .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
-          //   .eq("is_available", true)
-          //   .order("name", { ascending: true })
-          //   .limit(120)
-          supabase.from("products").select("id,name,store_id,stores(name)").limit(20).eq("is_available", true).order("name", { ascending: true })
-
+          supabase
+            .from("products")
+            .select("id,name,description,price,store_id,category,is_available,stores(name)")
+            .eq("is_available", true)
+            .order("name", { ascending: true })
+            .limit(120)
         ]);
 
         // Process stores data
@@ -141,7 +139,7 @@ export default function Home() {
             id: s.id,
             name: s.name,
             description: s.description ?? "",
-            image: s.image ?? "/logo.png",
+            image: "/logo.png",
             rating: Number(s.rating ?? 0),
             deliveryTime: s.delivery_time ?? "",
             location: s.location ?? "",
@@ -163,7 +161,7 @@ export default function Home() {
             name: p.name,
             description: p.description ?? "",
             price: Number(p.price ?? 0),
-            image: p.image ?? "/logo.png",
+            image: "/logo.png",
             storeId: p.store_id,
             storeName: getStoreName(p.stores),
             category: p.category ?? "",

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react";
+import imageCompression from "browser-image-compression";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,14 +48,17 @@ export function ImageUpload({
     setIsUploading(true);
 
     try {
-      // Convert file to base64 for preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setPreview(result);
-        onChange(result);
-      };
-      reader.readAsDataURL(file);
+      const options = {
+        maxSizeMB: 1, // target <= 1MB
+        maxWidthOrHeight: 1600,
+        useWebWorker: true,
+        initialQuality: 0.8,
+      } as const;
+
+      const compressedFile = await imageCompression(file, options);
+      const dataUrl = await imageCompression.getDataUrlFromFile(compressedFile);
+      setPreview(dataUrl);
+      onChange(dataUrl);
     } catch (error) {
       console.error('Error processing file:', error);
       alert('Error processing file. Please try again.');
