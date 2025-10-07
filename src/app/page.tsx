@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Store, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Store, Package, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { StoreCardSkeleton, ProductCardSkeleton } from "@/components/ui/loading-skeleton";
+import { ImageModal } from "@/components/ui/image-modal";
  
 import AddToCartButton from "@/components/cart/add-to-cart-button";
 
@@ -77,6 +78,12 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState("all");
   const [showProducts, setShowProducts] = useState(false);
   const [currentStorePage, setCurrentStorePage] = useState(1);
+  const [imageModal, setImageModal] = useState<{ isOpen: boolean; imageUrl: string; alt: string; title: string }>({
+    isOpen: false,
+    imageUrl: "",
+    alt: "",
+    title: ""
+  });
   const storesPerPage = 3;
   const supabase = createSupabaseBrowserClient();
   const productsSectionRef = useRef<HTMLDivElement | null>(null);
@@ -184,6 +191,24 @@ export default function Home() {
 
   const handleNextPage = () => {
     setCurrentStorePage(prev => Math.min(prev + 1, totalStorePages));
+  };
+
+  const openImageModal = (imageUrl: string, alt: string, title: string) => {
+    setImageModal({
+      isOpen: true,
+      imageUrl,
+      alt,
+      title
+    });
+  };
+
+  const closeImageModal = () => {
+    setImageModal({
+      isOpen: false,
+      imageUrl: "",
+      alt: "",
+      title: ""
+    });
   };
 
   const filteredProducts = products.filter(product => {
@@ -400,16 +425,35 @@ export default function Home() {
                     </div>
                     {/* Product Image Preview */}
                     {product.image && product.image !== "/logo.png" && (
-                      <div className="mt-3 w-full h-32 border rounded-lg overflow-hidden bg-gray-50">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
+                      <div className="mt-3 relative group">
+                        <div 
+                          className="w-full h-32 border rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity active:opacity-75"
+                          onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
+                        >
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white h-8 w-8 p-0 touch-manipulation"
+                          onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                        {/* Mobile: Always visible tap indicator */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pointer-events-none">
+                          <div className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                            Tap to view
+                          </div>
+                        </div>
                       </div>
                     )}
                   </CardHeader>
@@ -457,6 +501,15 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={imageModal.isOpen}
+        onClose={closeImageModal}
+        imageUrl={imageModal.imageUrl}
+        alt={imageModal.alt}
+        title={imageModal.title}
+      />
 
       <FooterSection />
     </div>
