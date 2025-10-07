@@ -80,6 +80,7 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState("all");
   const [showProducts, setShowProducts] = useState(false);
   const [currentStorePage, setCurrentStorePage] = useState(1);
+  const [currentProductPage, setCurrentProductPage] = useState(1);
   const [imageModal, setImageModal] = useState<{ isOpen: boolean; imageUrl: string; alt: string; title: string }>({
     isOpen: false,
     imageUrl: "",
@@ -87,6 +88,7 @@ export default function Home() {
     title: ""
   });
   const storesPerPage = 3;
+  const productsPerPage = 12;
   const supabase = createSupabaseBrowserClient();
   const productsSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -213,6 +215,11 @@ export default function Home() {
     });
   };
 
+  // Reset product page on filter changes
+  useEffect(() => {
+    setCurrentProductPage(1);
+  }, [deferredSearchTerm, selectedCategory, selectedStore]);
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(deferredSearchTerm.toLowerCase());
@@ -221,6 +228,12 @@ export default function Home() {
     
     return matchesSearch && matchesCategory && matchesStore;
   });
+
+  // Pagination logic for products
+  const totalProductPages = Math.ceil(filteredProducts.length / productsPerPage) || 1;
+  const productStartIndex = (currentProductPage - 1) * productsPerPage;
+  const productEndIndex = productStartIndex + productsPerPage;
+  const currentProducts = filteredProducts.slice(productStartIndex, productEndIndex);
 
   if (loading) {
     return (
@@ -413,7 +426,7 @@ export default function Home() {
                   <ProductCardSkeleton key={index} />
                 ))
               ) : (
-                filteredProducts.map((product) => (
+                currentProducts.map((product) => (
                 <Card key={product.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
@@ -489,6 +502,65 @@ export default function Home() {
                 ))
               )}
             </div>
+
+            {/* Products Pagination Controls */}
+            {filteredProducts.length > productsPerPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentProductPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentProductPage === 1}
+                  className="flex items-center space-x-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                </Button>
+
+                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                  <span className="text-sm text-gray-600">
+                    Page {currentProductPage} of {totalProductPages}
+                  </span>
+                  <div className="flex space-x-1">
+                    {Array.from({ length: Math.min(totalProductPages, 5) }, (_, i) => {
+                      let pageNum;
+                      if (totalProductPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentProductPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentProductPage >= totalProductPages - 2) {
+                        pageNum = totalProductPages - 4 + i;
+                      } else {
+                        pageNum = currentProductPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentProductPage(pageNum)}
+                          className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
+                            currentProductPage === pageNum
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentProductPage(prev => Math.min(prev + 1, totalProductPages))}
+                  disabled={currentProductPage === totalProductPages}
+                  className="flex items-center space-x-2"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
 
             {filteredProducts.length === 0 && (
               <div className="text-center py-12">
