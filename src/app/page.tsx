@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Store, Package } from "lucide-react";
+import { Search, Store, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { StoreCardSkeleton, ProductCardSkeleton } from "@/components/ui/loading-skeleton";
  
 import AddToCartButton from "@/components/cart/add-to-cart-button";
@@ -76,6 +76,8 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStore, setSelectedStore] = useState("all");
   const [showProducts, setShowProducts] = useState(false);
+  const [currentStorePage, setCurrentStorePage] = useState(1);
+  const storesPerPage = 3;
   const supabase = createSupabaseBrowserClient();
   const productsSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -85,6 +87,17 @@ export default function Home() {
     ) as string[];
     return unique.sort();
   }, [products]);
+
+  // Pagination logic for stores
+  const totalStorePages = Math.ceil(stores.length / storesPerPage);
+  const startIndex = (currentStorePage - 1) * storesPerPage;
+  const endIndex = startIndex + storesPerPage;
+  const currentStores = stores.slice(startIndex, endIndex);
+
+  // Reset to first page when stores change
+  useEffect(() => {
+    setCurrentStorePage(1);
+  }, [stores.length]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -165,6 +178,14 @@ export default function Home() {
     }, 0);
   };
 
+  const handlePreviousPage = () => {
+    setCurrentStorePage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentStorePage(prev => Math.min(prev + 1, totalStorePages));
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -221,17 +242,24 @@ export default function Home() {
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Stores</h2>
-              <p className="text-lg text-gray-600">Choose from our selection of campus stores</p>
+              <p className="text-lg text-gray-600">
+                Choose from our selection of campus stores
+                {!loading && stores.length > 0 && (
+                  <span className="block text-sm text-gray-500 mt-1">
+                    Showing {currentStores.length} of {stores.length} stores
+                  </span>
+                )}
+              </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {loading ? (
                 // Show skeleton loading for stores
-                Array.from({ length: 8 }).map((_, index) => (
+                Array.from({ length: storesPerPage }).map((_, index) => (
                   <StoreCardSkeleton key={index} />
                 ))
               ) : (
-                stores.map((store) => (
+                currentStores.map((store) => (
                   <StoreCard
                     key={store.id}
                     store={store}
@@ -240,6 +268,66 @@ export default function Home() {
                 ))
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {!loading && stores.length > storesPerPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={handlePreviousPage}
+                  disabled={currentStorePage === 1}
+                  className="flex items-center space-x-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                </Button>
+                
+                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                  <span className="text-sm text-gray-600">
+                    Page {currentStorePage} of {totalStorePages}
+                  </span>
+                  <div className="flex space-x-1">
+                    {Array.from({ length: Math.min(totalStorePages, 5) }, (_, i) => {
+                      // Show max 5 page numbers, with smart pagination
+                      let pageNum;
+                      if (totalStorePages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentStorePage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentStorePage >= totalStorePages - 2) {
+                        pageNum = totalStorePages - 4 + i;
+                      } else {
+                        pageNum = currentStorePage - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentStorePage(pageNum)}
+                          className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
+                            currentStorePage === pageNum
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={handleNextPage}
+                  disabled={currentStorePage === totalStorePages}
+                  className="flex items-center space-x-2"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           /* Products View */
