@@ -1,23 +1,25 @@
-// Simple in-memory cache for API responses
-interface CacheItem {
-  data: any;
+// Simple in-memory cache for API responses with strong typing
+type Primitive = string | number | boolean | null | undefined;
+
+interface CacheItem<T> {
+  data: T;
   timestamp: number;
   ttl: number; // Time to live in milliseconds
 }
 
 class SimpleCache {
-  private cache = new Map<string, CacheItem>();
+  private cache = new Map<string, CacheItem<unknown>>();
   private defaultTTL = 5 * 60 * 1000; // 5 minutes
 
-  set(key: string, data: any, ttl?: number): void {
+  set<T>(key: string, data: T, ttl?: number): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl: ttl || this.defaultTTL
+      ttl: ttl ?? this.defaultTTL
     });
   }
 
-  get(key: string): any | null {
+  get<T>(key: string): T | null {
     const item = this.cache.get(key);
     if (!item) return null;
 
@@ -27,7 +29,7 @@ class SimpleCache {
       return null;
     }
 
-    return item.data;
+    return item.data as T;
   }
 
   delete(key: string): void {
@@ -39,10 +41,10 @@ class SimpleCache {
   }
 
   // Generate cache key from parameters
-  generateKey(prefix: string, params: Record<string, any> = {}): string {
+  generateKey(prefix: string, params: Record<string, Primitive> = {}): string {
     const sortedParams = Object.keys(params)
       .sort()
-      .map(key => `${key}:${params[key]}`)
+      .map((key) => `${key}:${String(params[key])}`)
       .join('|');
     return `${prefix}:${sortedParams}`;
   }
