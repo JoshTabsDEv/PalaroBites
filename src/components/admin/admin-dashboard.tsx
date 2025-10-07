@@ -103,7 +103,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
           // Play short beep
           try {
-            const AudioContextCtor = (window as any).AudioContext || (window as any).webkitAudioContext;
+            type AudioContextWindow = { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+            const w = window as unknown as AudioContextWindow;
+            const AudioContextCtor = w.AudioContext ?? w.webkitAudioContext;
             if (AudioContextCtor) {
               const ctx = new AudioContextCtor();
               const o = ctx.createOscillator();
