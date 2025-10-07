@@ -119,15 +119,18 @@ export default function Home() {
         const [storesResult, productsResult] = await Promise.all([
           supabase
             .from("stores")
-            .select("id,name,description,image,rating,delivery_time,location,phone,is_open,categories")
+            .select("id, name, description, image, rating, delivery_time, location, phone, is_open, categories")
             .eq("is_open", true)
             .order("name", { ascending: true }),
+        
           supabase
             .from("products")
-            .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
+            .select("id, name, description, price, image, store_id, category, is_available")
             .eq("is_available", true)
             .order("name", { ascending: true })
+            .limit(120)
         ]);
+        
 
         // Process stores data
         if (storesResult.error) {
