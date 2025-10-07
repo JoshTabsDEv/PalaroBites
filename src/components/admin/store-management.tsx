@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { ImageModal } from "@/components/ui/image-modal";
 import { Plus, Edit, Trash2, MapPin, Clock, Star, Phone, Eye, EyeOff } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 
@@ -32,6 +33,12 @@ export default function StoreManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [imageModal, setImageModal] = useState<{ isOpen: boolean; imageUrl: string; alt: string; title: string }>({
+    isOpen: false,
+    imageUrl: "",
+    alt: "",
+    title: ""
+  });
   const [newStore, setNewStore] = useState<Partial<Store>>({
     name: "",
     description: "",
@@ -175,6 +182,24 @@ export default function StoreManagement() {
     setStores(stores.map(store => store.id === storeId ? { ...store, isOpen: next } : store));
   };
 
+  const openImageModal = (imageUrl: string, alt: string, title: string) => {
+    setImageModal({
+      isOpen: true,
+      imageUrl,
+      alt,
+      title
+    });
+  };
+
+  const closeImageModal = () => {
+    setImageModal({
+      isOpen: false,
+      imageUrl: "",
+      alt: "",
+      title: ""
+    });
+  };
+
   return (
     <div className="space-y-6">
       {error && (
@@ -287,15 +312,28 @@ export default function StoreManagement() {
               </div>
               {/* Store Image Preview */}
               {store.image && store.image !== "/logo.png" && (
-                <div className="mt-3 w-full h-32 border rounded-lg overflow-hidden bg-gray-50">
-                  <img
-                    src={store.image}
-                    alt={store.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
+                <div className="mt-3 relative group">
+                  <div 
+                    className="w-full h-32 border rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => openImageModal(store.image, store.name, `${store.name} - Store Image`)}
+                  >
+                    <img
+                      src={store.image}
+                      alt={store.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white"
+                    onClick={() => openImageModal(store.image, store.name, `${store.name} - Store Image`)}
+                  >
+                    <Eye className="h-3 w-3" />
+                  </Button>
                 </div>
               )}
             </CardHeader>
@@ -431,6 +469,15 @@ export default function StoreManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={imageModal.isOpen}
+        onClose={closeImageModal}
+        imageUrl={imageModal.imageUrl}
+        alt={imageModal.alt}
+        title={imageModal.title}
+      />
     </div>
   );
 }
