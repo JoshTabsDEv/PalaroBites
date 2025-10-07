@@ -121,161 +121,176 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[100vw] max-h-[100vh] p-0 bg-black border-none sm:max-w-[98vw] sm:max-h-[98vh]">
+      <DialogContent className="max-w-[100vw] max-h-[100vh] p-0 bg-black border-none sm:max-w-[95vw] sm:max-h-[95vh] sm:rounded-lg">
         <div className="relative w-full h-full flex flex-col">
-          {/* Header - Mobile Optimized */}
-          <div className="flex items-center justify-between p-2 sm:p-3 bg-black/90 backdrop-blur-sm border-b border-white/10">
-            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+          {/* Header - Clean Professional Design */}
+          <div className="flex items-center justify-between p-3 bg-black/95 backdrop-blur-md border-b border-white/20">
+            <div className="flex items-center flex-1 min-w-0">
               {title && (
-                <h3 className="text-sm sm:text-lg font-medium text-white truncate">
+                <h3 className="text-base font-medium text-white truncate pr-4">
                   {title}
                 </h3>
               )}
             </div>
-            <div className="flex items-center space-x-1">
-              {/* Mobile: Show only essential controls */}
-              <div className="hidden sm:flex items-center space-x-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDownload}
-                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
-                  title="Download image"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleZoomOut}
-                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
-                  disabled={scale <= 0.3}
-                  title="Zoom out"
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-white/80 min-w-[50px] text-center font-mono">
-                  {Math.round(scale * 100)}%
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleZoomIn}
-                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
-                  disabled={scale >= 4}
-                  title="Zoom in"
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRotate}
-                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
-                  title="Rotate"
-                >
-                  <RotateCw className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleReset}
-                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
-                  title="Reset"
-                >
-                  Reset
-                </Button>
-              </div>
-              
-              {/* Mobile: Simplified controls */}
-              <div className="flex sm:hidden items-center space-x-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleZoomOut}
-                  className="text-white hover:bg-white/20 h-10 w-10 p-0"
-                  disabled={scale <= 0.3}
-                >
-                  <ZoomOut className="h-5 w-5" />
-                </Button>
-                <span className="text-xs text-white/80 min-w-[40px] text-center font-mono">
-                  {Math.round(scale * 100)}%
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleZoomIn}
-                  className="text-white hover:bg-white/20 h-10 w-10 p-0"
-                  disabled={scale >= 4}
-                >
-                  <ZoomIn className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleReset}
-                  className="text-white hover:bg-white/20 h-10 w-10 p-0"
-                >
-                  <RotateCw className="h-5 w-5" />
-                </Button>
-              </div>
-              
+            
+            {/* Desktop Controls */}
+            <div className="hidden sm:flex items-center space-x-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClose}
-                className="text-white hover:bg-white/20 h-8 w-8 sm:h-8 sm:w-8 p-0 ml-2"
-                title="Close"
+                onClick={handleDownload}
+                className="text-white hover:bg-white/20 h-9 w-9 p-0 rounded-full"
+                title="Download"
               >
-                <X className="h-4 w-4 sm:h-4 sm:w-4" />
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomOut}
+                className="text-white hover:bg-white/20 h-9 w-9 p-0 rounded-full"
+                disabled={scale <= 0.3}
+                title="Zoom out"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <div className="bg-white/10 rounded-full px-3 py-1">
+                <span className="text-sm text-white font-mono">
+                  {Math.round(scale * 100)}%
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomIn}
+                className="text-white hover:bg-white/20 h-9 w-9 p-0 rounded-full"
+                disabled={scale >= 4}
+                title="Zoom in"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRotate}
+                className="text-white hover:bg-white/20 h-9 w-9 p-0 rounded-full"
+                title="Rotate"
+              >
+                <RotateCw className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="text-white hover:bg-white/20 px-3 py-1 rounded-full text-sm"
+                title="Reset"
+              >
+                Reset
               </Button>
             </div>
+            
+            {/* Mobile Controls - Clean and Simple */}
+            <div className="flex sm:hidden items-center space-x-2">
+              <div className="flex items-center bg-white/10 rounded-full px-2 py-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleZoomOut}
+                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                  disabled={scale <= 0.3}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-white font-mono mx-2 min-w-[35px] text-center">
+                  {Math.round(scale * 100)}%
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleZoomIn}
+                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                  disabled={scale >= 4}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 rounded-full"
+                title="Reset"
+              >
+                <RotateCw className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-white hover:bg-white/20 h-9 w-9 p-0 rounded-full ml-2"
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
 
-          {/* Image container - Mobile Optimized */}
+          {/* Image container - Professional Design */}
           <div 
-            className="flex-1 overflow-hidden flex items-center justify-center bg-gray-900 touch-none"
+            className="flex-1 overflow-hidden flex items-center justify-center bg-gradient-to-br from-gray-900 to-black touch-none"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             onWheel={handleWheel}
             onTouchStart={(e) => {
-              // Prevent default touch behaviors for better mobile experience
               e.preventDefault();
             }}
             onTouchMove={(e) => {
-              // Prevent scrolling when touching the image
               e.preventDefault();
             }}
           >
-            <img
-              src={imageUrl}
-              alt={alt}
-              className="max-w-none select-none shadow-2xl touch-none"
-              style={{
-                transform: `scale(${scale}) rotate(${rotation}deg) translate(${position.x}px, ${position.y}px)`,
-                transition: isDragging ? 'none' : 'transform 0.15s ease-out',
-                cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
-                maxHeight: '85vh',
-                maxWidth: '95vw',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                WebkitTouchCallout: 'none'
-              }}
-              draggable={false}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            <div className="relative">
+              <img
+                src={imageUrl}
+                alt={alt}
+                className="max-w-none select-none shadow-2xl touch-none rounded-lg"
+                style={{
+                  transform: `scale(${scale}) rotate(${rotation}deg) translate(${position.x}px, ${position.y}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+                  maxHeight: 'calc(100vh - 140px)',
+                  maxWidth: 'calc(100vw - 40px)',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  WebkitTouchCallout: 'none',
+                  filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5))'
+                }}
+                draggable={false}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
           </div>
 
-          {/* Footer - Mobile Optimized */}
-          <div className="p-2 sm:p-3 bg-black/80 backdrop-blur-sm border-t border-white/10">
-            <p className="text-xs sm:text-sm text-white/60 text-center">
-              <span className="hidden sm:inline">Scroll to zoom • Drag to pan • ESC to close</span>
-              <span className="sm:hidden">Pinch to zoom • Drag to pan • Tap X to close</span>
-            </p>
+          {/* Footer - Clean and Minimal */}
+          <div className="p-3 bg-black/95 backdrop-blur-md border-t border-white/20">
+            <div className="flex items-center justify-center space-x-6 text-xs text-white/70">
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+                <span>Pinch to zoom</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+                <span>Drag to pan</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+                <span>Tap X to close</span>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -427,31 +427,26 @@ export default function Home() {
                     {product.image && product.image !== "/logo.png" && (
                       <div className="mt-3 relative group">
                         <div 
-                          className="w-full h-32 border rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity active:opacity-75"
+                          className="w-full h-32 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:shadow-md transition-all duration-200 active:scale-[0.98]"
                           onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
                         >
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                             loading="lazy"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
                             }}
                           />
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white h-8 w-8 p-0 touch-manipulation"
-                          onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
-                        >
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                        {/* Mobile: Always visible tap indicator */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pointer-events-none">
-                          <div className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                            Tap to view
+                          {/* Professional overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
+                                <Eye className="h-3 w-3 inline mr-1" />
+                                View Full Size
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
