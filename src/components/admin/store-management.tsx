@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { ImageModal } from "@/components/ui/image-modal";
-import { Plus, Edit, Trash2, MapPin, Clock, Star, Phone, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, Clock, Phone, Eye, EyeOff } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 
 interface Store {
@@ -351,10 +351,7 @@ export default function StoreManagement() {
                 <Phone className="h-4 w-4 mr-2" />
                 {store.phone}
               </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <Star className="h-4 w-4 mr-2 fill-yellow-400 text-yellow-400" />
-                {store.rating}
-              </div>
+              {/* Rating removed */}
               
               <div className="flex flex-wrap gap-1">
                 {store.categories.map((category, index) => (

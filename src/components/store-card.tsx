@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Clock, Star, Phone } from "lucide-react"
+import { MapPin, Clock, Phone } from "lucide-react"
 import Image from "next/image"
 
 interface Store {
@@ -45,12 +45,7 @@ export function StoreCard({ store, onSelect }: StoreCardProps) {
               {store.isOpen ? "Open" : "Closed"}
             </Badge>
           </div>
-          <div className="absolute bottom-2 left-2">
-            <Badge variant="outline" className="bg-white/90">
-              <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
-              {store.rating}
-            </Badge>
-          </div>
+          {/* Rating removed */}
         </div>
       </CardHeader>
       <CardContent className="p-4">
