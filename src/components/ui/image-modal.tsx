@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
+import { X, ZoomIn, ZoomOut, RotateCw, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface ImageModalProps {
@@ -30,11 +30,11 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
   }, [isOpen]);
 
   const handleZoomIn = () => {
-    setScale(prev => Math.min(prev * 1.2, 3));
+    setScale(prev => Math.min(prev * 1.3, 4));
   };
 
   const handleZoomOut = () => {
-    setScale(prev => Math.max(prev / 1.2, 0.5));
+    setScale(prev => Math.max(prev / 1.3, 0.3));
   };
 
   const handleRotate = () => {
@@ -45,6 +45,15 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
     setScale(1);
     setRotation(0);
     setPosition({ x: 0, y: 0 });
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = alt || 'image';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -68,6 +77,15 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,32 +121,43 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none">
+      <DialogContent className="max-w-[98vw] max-h-[98vh] p-0 bg-black border-none">
         <div className="relative w-full h-full flex flex-col">
-          {/* Header with controls */}
-          <div className="flex items-center justify-between p-4 bg-black/50 text-white">
-            <div className="flex items-center space-x-2">
-              {title && <h3 className="text-lg font-semibold">{title}</h3>}
+          {/* Header */}
+          <div className="flex items-center justify-between p-3 bg-black/80 backdrop-blur-sm border-b border-white/10">
+            <div className="flex items-center space-x-3">
+              {title && <h3 className="text-lg font-medium text-white truncate max-w-md">{title}</h3>}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownload}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                title="Download image"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomOut}
-                className="text-white hover:bg-white/20"
-                disabled={scale <= 0.5}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                disabled={scale <= 0.3}
+                title="Zoom out"
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-white/70 min-w-[60px] text-center">
+              <span className="text-sm text-white/80 min-w-[50px] text-center font-mono">
                 {Math.round(scale * 100)}%
               </span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomIn}
-                className="text-white hover:bg-white/20"
-                disabled={scale >= 3}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                disabled={scale >= 4}
+                title="Zoom in"
               >
                 <ZoomIn className="h-4 w-4" />
               </Button>
@@ -136,7 +165,8 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
                 variant="ghost"
                 size="sm"
                 onClick={handleRotate}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                title="Rotate"
               >
                 <RotateCw className="h-4 w-4" />
               </Button>
@@ -144,7 +174,8 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
                 variant="ghost"
                 size="sm"
                 onClick={handleReset}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                title="Reset"
               >
                 Reset
               </Button>
@@ -152,7 +183,8 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                title="Close"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -161,20 +193,23 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
 
           {/* Image container */}
           <div 
-            className="flex-1 overflow-hidden flex items-center justify-center cursor-move"
+            className="flex-1 overflow-hidden flex items-center justify-center bg-gray-900"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onWheel={handleWheel}
           >
             <img
               src={imageUrl}
               alt={alt}
-              className="max-w-none select-none"
+              className="max-w-none select-none shadow-2xl"
               style={{
                 transform: `scale(${scale}) rotate(${rotation}deg) translate(${position.x}px, ${position.y}px)`,
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+                transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+                cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+                maxHeight: '90vh',
+                maxWidth: '90vw'
               }}
               draggable={false}
               onError={(e) => {
@@ -183,10 +218,10 @@ export function ImageModal({ isOpen, onClose, imageUrl, alt, title }: ImageModal
             />
           </div>
 
-          {/* Footer with instructions */}
-          <div className="p-4 bg-black/50 text-white/70 text-sm text-center">
-            <p>
-              Use mouse wheel or +/- to zoom • Drag to pan when zoomed • Press R to rotate • Press 0 to reset • Press ESC to close
+          {/* Footer */}
+          <div className="p-2 bg-black/80 backdrop-blur-sm border-t border-white/10">
+            <p className="text-xs text-white/60 text-center">
+              Scroll to zoom • Drag to pan • ESC to close
             </p>
           </div>
         </div>
