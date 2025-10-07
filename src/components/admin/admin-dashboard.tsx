@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [activeOrders, setActiveOrders] = useState<number>(0);
   const [todaysRevenue, setTodaysRevenue] = useState<number>(0);
   const [activity, setActivity] = useState<Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string }>>([]);
+  const [newOrderNotice, setNewOrderNotice] = useState<{ visible: boolean; title: string } | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -85,6 +87,56 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     loadStats();
   }, [supabase]);
 
+  // Realtime: notify on new orders with sound
+  useEffect(() => {
+    const channel = supabase
+      .channel('orders-inserts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+        try {
+          const record = payload.new as { customer_name?: string; total?: number; id?: string };
+          const customer = record?.customer_name || 'New customer';
+          const total = Number(record?.total || 0);
+          setNewOrderNotice({ visible: true, title: `New order from ${customer} • ₱${total.toFixed(2)}` });
+
+          // Increment active orders optimistically
+          setActiveOrders((v) => v + 1);
+
+          // Play short beep
+          try {
+            const AudioContextCtor = (window as any).AudioContext || (window as any).webkitAudioContext;
+            if (AudioContextCtor) {
+              const ctx = new AudioContextCtor();
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              o.type = 'sine';
+              o.frequency.value = 880; // A5
+              o.connect(g);
+              g.connect(ctx.destination);
+              g.gain.setValueAtTime(0.001, ctx.currentTime);
+              g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+              g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+              o.start();
+              o.stop(ctx.currentTime + 0.2);
+            }
+          } catch {
+            // ignore audio errors
+          }
+
+          // Auto-hide after 4s
+          if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+          hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 4000);
+        } catch {
+          // swallow errors from malformed payload
+        }
+      })
+      .subscribe();
+
+    return () => {
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
+
   const stats = [
     { title: "Total Stores", value: String(storeCount), icon: Store, color: "text-blue-600" },
     { title: "Total Products", value: String(productCount), icon: Package, color: "text-green-600" },
@@ -94,6 +146,17 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* New Order Notification */}
+      {newOrderNotice?.visible && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="rounded-lg shadow-lg border bg-white px-4 py-3 max-w-sm">
+            <div className="flex items-start gap-3">
+              <Badge>Order</Badge>
+              <div className="text-sm text-gray-900">{newOrderNotice.title}</div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
