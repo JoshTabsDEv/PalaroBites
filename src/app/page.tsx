@@ -124,7 +124,7 @@ export default function Home() {
             .order("name", { ascending: true }),
           supabase
             .from("products")
-            .select("id,name,description,price,store_id,category,is_available,stores(name)")
+            .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
             .eq("is_available", true)
             .order("name", { ascending: true })
             .limit(120)
