@@ -86,7 +86,11 @@ export default function ProductManagement() {
       ] = await Promise.all([
         supabase.from("stores").select("id,name"),
         supabase.from("products").select("id", { count: "exact", head: true }),
-        supabase.from("products").select("id,name,description,price,image,store_id,category,is_available,stores(name)").order('name', { ascending: true }).range(from, to)
+        supabase
+          .from("products")
+          .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
+          .order('created_at', { ascending: false })
+          .range(from, to)
       ]);
       setTotalProducts(totalCnt || 0);
       if (storeErr) setError(storeErr.message);
@@ -97,6 +101,11 @@ export default function ProductManagement() {
       const getStoreName = (s: ProductRow["stores"]) => Array.isArray(s) ? s[0]?.name || "" : (s?.name || "");
       if (!productErr && productRows) {
         const rows = productRows as ProductRow[];
+        if (rows.length === 0 && page > 0) {
+          // If we navigated past the end (e.g., after deletions), step back a page
+          setPage(page - 1);
+          return;
+        }
         setProducts(rows.map((p) => ({
           id: p.id,
           name: p.name,
@@ -113,7 +122,7 @@ export default function ProductManagement() {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, supabase]);
 
   const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.storeId) return;

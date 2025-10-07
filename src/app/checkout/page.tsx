@@ -350,7 +350,7 @@ export default function CheckoutPage() {
                     <span className="text-sm font-medium text-blue-900">Delivery Time</span>
                   </div>
                   <p className="text-sm text-blue-700">
-                    Your order will be delivered within 15-30 minutes after confirmation.
+                    Your order will be delivered within 5-10 minutes after confirmation and may depend on the store preparation time.
                   </p>
                 </div>
 
