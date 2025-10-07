@@ -5,7 +5,8 @@ import FooterSection from "@/components/sections/footer/default";
 import Hero from "@/components/sections/hero/default";
 import Navbar from "@/components/sections/navbar/default";
 import { StoreCard } from "@/components/store-card";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
+import Image from "next/image";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStore, setSelectedStore] = useState("all");
   const [showProducts, setShowProducts] = useState(false);
@@ -212,8 +214,8 @@ export default function Home() {
   };
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = product.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+                         product.description.toLowerCase().includes(deferredSearchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
     const matchesStore = selectedStore === "all" || product.storeId === selectedStore;
     
@@ -425,21 +427,32 @@ export default function Home() {
                     </div>
                     {/* Product Image Preview */}
                     {product.image && product.image !== "/logo.png" && (
-                      <div className="mt-3">
+                      <div className="mt-3 relative group">
                         <div 
-                          className="w-full h-32 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                          className="w-full h-32 border rounded-lg overflow-hidden bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
                           onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
                         >
-                          <img
+                          <Image
                             src={product.image}
                             alt={product.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            className="object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
+                              const target = e.target as HTMLImageElement;
+                              if (target) target.style.display = 'none';
                             }}
+                            priority={false}
                           />
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white h-8 w-8 p-0"
+                          onClick={() => openImageModal(product.image, product.name, `${product.name} - Product Image`)}
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
                       </div>
                     )}
                   </CardHeader>
