@@ -30,6 +30,9 @@ export default function StoreManagement() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const [page, setPage] = useState<number>(0);
+  const [totalStores, setTotalStores] = useState<number>(0);
+  const pageSize = 20;
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
@@ -55,10 +58,17 @@ export default function StoreManagement() {
     const loadStores = async () => {
       setLoading(true);
       setError("");
-      const { data, error } = await supabase
-        .from("stores")
-        .select("id,name,description,image,rating,delivery_time,location,phone,is_open,categories")
-        .order("name", { ascending: true });
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+      const [{ count: totalCnt }, { data, error }] = await Promise.all([
+        supabase.from("stores").select("id", { count: "exact", head: true }),
+        supabase
+          .from("stores")
+          .select("id,name,description,image,rating,delivery_time,location,phone,is_open,categories")
+          .order("name", { ascending: true })
+          .range(from, to),
+      ]);
+      setTotalStores(totalCnt || 0);
       if (error) {
         setError(error.message);
       } else {
@@ -93,7 +103,7 @@ export default function StoreManagement() {
     };
     loadStores();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
   const handleAddStore = async () => {
     if (!newStore.name) return;
@@ -126,7 +136,9 @@ export default function StoreManagement() {
       isOpen: Boolean(data.is_open),
       categories: Array.isArray(data.categories) ? data.categories : [],
     };
-    setStores([...stores, created]);
+    // Reload current page to reflect changes
+    setStores((prev) => prev);
+    setPage(0);
     setNewStore({ name: "", description: "", image: "/logo.png", rating: 0, deliveryTime: "", location: "", phone: "", isOpen: true, categories: [] });
     setIsAddDialogOpen(false);
   };
@@ -167,7 +179,13 @@ export default function StoreManagement() {
       setError(error.message);
       return;
     }
-    setStores(stores.filter(store => store.id !== storeId));
+    // If deleting last item on page, move back a page when needed
+    const remaining = stores.length - 1;
+    if (remaining === 0 && page > 0) {
+      setPage(page - 1);
+    } else {
+      setStores(stores.filter(store => store.id !== storeId));
+    }
   };
 
   const toggleStoreStatus = async (storeId: string) => {
@@ -390,6 +408,26 @@ export default function StoreManagement() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between pt-2">
+        <div className="text-sm text-gray-600">
+          Page {page + 1} of {Math.max(1, Math.ceil(totalStores / pageSize))}
+        </div>
+        <div className="space-x-2">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={(page + 1) * pageSize >= totalStores}
+          >
+            Next
+          </Button>
+        </div>
       </div>
 
       {/* Edit Dialog */}

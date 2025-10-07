@@ -51,6 +51,9 @@ export default function ProductManagement() {
   const [stores, setStores] = useState<StoreOption[]>(defaultStores);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const [page, setPage] = useState<number>(0);
+  const [totalProducts, setTotalProducts] = useState<number>(0);
+  const pageSize = 20;
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -74,10 +77,18 @@ export default function ProductManagement() {
     const load = async () => {
       setLoading(true);
       setError("");
-      const [{ data: storeRows, error: storeErr }, { data: productRows, error: productErr }] = await Promise.all([
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+      const [
+        { data: storeRows, error: storeErr },
+        { count: totalCnt },
+        { data: productRows, error: productErr }
+      ] = await Promise.all([
         supabase.from("stores").select("id,name"),
-        supabase.from("products").select("id,name,description,price,image,store_id,category,is_available,stores(name)")
+        supabase.from("products").select("id", { count: "exact", head: true }),
+        supabase.from("products").select("id,name,description,price,image,store_id,category,is_available,stores(name)").order('name', { ascending: true }).range(from, to)
       ]);
+      setTotalProducts(totalCnt || 0);
       if (storeErr) setError(storeErr.message);
       if (productErr) setError(productErr.message);
       if (!storeErr && storeRows) {
@@ -102,7 +113,7 @@ export default function ProductManagement() {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
   const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.storeId) return;
@@ -133,7 +144,9 @@ export default function ProductManagement() {
       category: d.category || "",
       isAvailable: Boolean(d.is_available),
     };
-    setProducts([...products, created]);
+    // Refresh to first page to include new item deterministically
+    setProducts((prev) => prev);
+    setPage(0);
     setNewProduct({ name: "", description: "", price: 0, image: "/logo.png", storeId: "", category: "", isAvailable: true });
     setIsAddDialogOpen(false);
   };
@@ -166,7 +179,12 @@ export default function ProductManagement() {
     setError("");
     const { error } = await supabase.from("products").delete().eq("id", productId);
     if (error) { setError(error.message); return; }
-    setProducts(products.filter(product => product.id !== productId));
+    const remaining = products.length - 1;
+    if (remaining === 0 && page > 0) {
+      setPage(page - 1);
+    } else {
+      setProducts(products.filter(product => product.id !== productId));
+    }
   };
 
   const openImageModal = (imageUrl: string, alt: string, title: string) => {
@@ -392,6 +410,26 @@ export default function ProductManagement() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between pt-2">
+        <div className="text-sm text-gray-600">
+          Page {page + 1} of {Math.max(1, Math.ceil(totalProducts / pageSize))}
+        </div>
+        <div className="space-x-2">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={(page + 1) * pageSize >= totalProducts}
+          >
+            Next
+          </Button>
+        </div>
       </div>
 
       {/* Edit Dialog */}
