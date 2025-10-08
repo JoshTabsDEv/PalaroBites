@@ -27,6 +27,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [newOrderNotice, setNewOrderNotice] = useState<{ visible: boolean; title: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const hideTimerRef = useRef<number | null>(null);
   const refreshIntervalRef = useRef<number | null>(null);
   const previousActivityRef = useRef<Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string }>>([]);
@@ -74,11 +75,11 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     }
   };
 
-  const playOrderNotificationSound = () => {
-    console.log('playOrderNotificationSound called');
+  const playOrderNotificationSound = (enableVoice = true) => {
+    console.log('playOrderNotificationSound called, voice enabled:', enableVoice);
     try {
-      // Play AI voice saying "new order"
-      if ('speechSynthesis' in window) {
+      // Play AI voice saying "new order" only if enabled
+      if (enableVoice && 'speechSynthesis' in window) {
         console.log('Playing AI voice: "New order"');
         
         // Cancel any ongoing speech first
@@ -132,6 +133,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         // Try immediately and with a delay
         speakText();
         setTimeout(speakText, 100);
+      } else if (!enableVoice) {
+        console.log('Voice disabled for this notification');
       } else {
         console.log('Speech synthesis not available');
       }
@@ -279,7 +282,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
           // Play enhanced order notification sound with AI voice
           console.log('Playing order notification sound...');
-          playOrderNotificationSound();
+          playOrderNotificationSound(voiceEnabled);
 
           // Auto-hide after 4s
           if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
@@ -324,6 +327,18 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const handleManualRefresh = () => {
     loadStats();
+  };
+
+  const enableVoiceNotifications = () => {
+    if ('speechSynthesis' in window) {
+      // Test speech synthesis to enable it for future use
+      const utterance = new SpeechSynthesisUtterance('Voice notifications enabled');
+      utterance.volume = 0.1; // Very quiet test
+      utterance.rate = 1.5; // Fast
+      speechSynthesis.speak(utterance);
+      setVoiceEnabled(true);
+      console.log('Voice notifications enabled');
+    }
   };
 
   const stats = [
@@ -373,11 +388,18 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                 {autoRefreshEnabled ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
               </Button>
               <Button 
-                onClick={playOrderNotificationSound} 
+                onClick={() => playOrderNotificationSound(true)} 
                 variant="outline"
                 className="flex items-center gap-2"
               >
                 🔊 Test Sound
+              </Button>
+              <Button 
+                onClick={enableVoiceNotifications} 
+                variant={voiceEnabled ? "dark" : "outline"}
+                className="flex items-center gap-2"
+              >
+                🎤 {voiceEnabled ? 'Voice ON' : 'Enable Voice'}
               </Button>
               <Button onClick={() => window.location.href = '/'} variant="dark">
                 Back to Site
