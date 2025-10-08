@@ -158,15 +158,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getDeliveryFee = () => {
     // Base delivery fee
     const BASE_FEE = 5;
-    // Extra fee per every 4 items beyond the first 4 (changeable as needed)
-    const EXTRA_PER_FOUR = 1;
+    // Extra fee per every 3 items beyond the first 3 (changeable as needed)
+    const EXTRA_PER_THREE = 5;
 
     const totalQty = getTotalItems();
     if (totalQty === 0) return 0;
-    if (totalQty <= 4) return BASE_FEE;
+    if (totalQty <= 3) return BASE_FEE;
 
-    const extraGroups = Math.floor((totalQty - 4) / 4) + 1; // 5-8 =>1, 9-12=>2, etc.
-    return BASE_FEE + EXTRA_PER_FOUR * extraGroups;
+    const extraGroups = Math.floor((totalQty - 3) / 3) + 1; // 4-6 =>1, 7-9=>2, etc.
+    return BASE_FEE + EXTRA_PER_THREE * extraGroups;
   };
 
   const getTotal = () => {
