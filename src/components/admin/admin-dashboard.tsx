@@ -299,7 +299,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           const total = Number(record?.total || 0);
           console.log('Order details:', { customer, total, id: record?.id });
           
-          setNewOrderNotice({ visible: true, title: `New order from ${customer} • ₱${total.toFixed(2)}` });
+          const orderTitle = `New order from ${customer} • ₱${total.toFixed(2)}`;
+          setNewOrderNotice({ visible: true, title: orderTitle });
 
           // Increment active orders optimistically
           setActiveOrders((v) => v + 1);
@@ -308,9 +309,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           console.log('Playing order notification sound...');
           playOrderNotificationSound(voiceEnabled);
 
-          // Auto-hide after 4s
+          // Auto-hide after 6s (longer to match simulation)
           if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-          hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 4000);
+          hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 6000);
         } catch (error) {
           console.error('Error processing new order:', error);
         }
@@ -425,13 +426,22 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const simulateNewOrder = () => {
     console.log('🎭 Simulating new order notification...');
-    setNewOrderNotice({ visible: true, title: 'Test order from Test Customer • ₱25.00' });
+    
+    // Generate random order details for more realistic simulation
+    const customers = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown'];
+    const amounts = [15.50, 25.00, 32.75, 18.25, 45.00, 28.50];
+    const randomCustomer = customers[Math.floor(Math.random() * customers.length)];
+    const randomAmount = amounts[Math.floor(Math.random() * amounts.length)];
+    
+    const orderTitle = `New order from ${randomCustomer} • ₱${randomAmount.toFixed(2)}`;
+    
+    setNewOrderNotice({ visible: true, title: orderTitle });
     setActiveOrders((v) => v + 1);
     playOrderNotificationSound(voiceEnabled);
     
-    // Auto-hide after 4s
+    // Auto-hide after 6s (longer for simulation)
     if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 4000);
+    hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 6000);
   };
 
   const stats = [
@@ -445,11 +455,27 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     <div className="min-h-screen bg-gray-50">
       {/* New Order Notification */}
       {newOrderNotice?.visible && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="rounded-lg shadow-lg border bg-white px-4 py-3 max-w-sm">
-            <div className="flex items-start gap-3">
-              <Badge>Order</Badge>
-              <div className="text-sm text-gray-900">{newOrderNotice.title}</div>
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-5 duration-300">
+          <div className="rounded-lg shadow-xl border-2 border-green-500 bg-white px-6 py-4 max-w-sm transform transition-all duration-300 hover:scale-105">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-green-100 text-green-800 border-green-200">New Order</Badge>
+                  <span className="text-xs text-gray-500">Just now</span>
+                </div>
+                <div className="text-sm font-medium text-gray-900">{newOrderNotice.title}</div>
+              </div>
+              <button 
+                onClick={() => setNewOrderNotice(null)}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
