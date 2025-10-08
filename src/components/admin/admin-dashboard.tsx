@@ -55,6 +55,55 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     }
   };
 
+  const playOrderNotificationSound = () => {
+    try {
+      // Play AI voice saying "new order"
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance('New order');
+        utterance.volume = 0.8;
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        speechSynthesis.speak(utterance);
+      }
+
+      // Play enhanced sound notification
+      type AudioContextWindow = { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+      const w = window as unknown as AudioContextWindow;
+      const AudioContextCtor = w.AudioContext ?? w.webkitAudioContext;
+      if (AudioContextCtor) {
+        const ctx = new AudioContextCtor();
+        
+        // Create a more complex sound with multiple frequencies
+        const frequencies = [880, 1100, 1320]; // A5, C#6, E6 - pleasant chord
+        const oscillators = frequencies.map(freq => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.value = freq;
+          o.connect(g);
+          g.connect(ctx.destination);
+          return { oscillator: o, gain: g };
+        });
+
+        const duration = 0.8; // Longer duration
+        const now = ctx.currentTime;
+
+        oscillators.forEach(({ oscillator, gain }) => {
+          // Louder volume with smooth fade
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.exponentialRampToValueAtTime(0.4, now + 0.05); // Much louder
+          gain.gain.exponentialRampToValueAtTime(0.3, now + duration * 0.3);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+          
+          oscillator.start(now);
+          oscillator.stop(now + duration);
+        });
+      }
+    } catch {
+      // ignore audio errors
+    }
+  };
+
   const loadStats = async () => {
     setIsRefreshing(true);
     try {
@@ -150,28 +199,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           // Increment active orders optimistically
           setActiveOrders((v) => v + 1);
 
-          // Play short beep
-          try {
-            type AudioContextWindow = { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
-            const w = window as unknown as AudioContextWindow;
-            const AudioContextCtor = w.AudioContext ?? w.webkitAudioContext;
-            if (AudioContextCtor) {
-              const ctx = new AudioContextCtor();
-              const o = ctx.createOscillator();
-              const g = ctx.createGain();
-              o.type = 'sine';
-              o.frequency.value = 880; // A5
-              o.connect(g);
-              g.connect(ctx.destination);
-              g.gain.setValueAtTime(0.001, ctx.currentTime);
-              g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-              g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-              o.start();
-              o.stop(ctx.currentTime + 0.2);
-            }
-          } catch {
-            // ignore audio errors
-          }
+          // Play enhanced order notification sound with AI voice
+          playOrderNotificationSound();
 
           // Auto-hide after 4s
           if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
