@@ -277,10 +277,22 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   // Realtime: notify on new orders with sound
   useEffect(() => {
     console.log('Setting up realtime order notifications...');
+    console.log('Supabase client:', supabase);
+    
     const channel = supabase
-      .channel('orders-inserts')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
-        console.log('New order detected:', payload);
+      .channel('orders-inserts', {
+        config: {
+          broadcast: { self: false },
+          presence: { key: 'admin-dashboard' }
+        }
+      })
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'orders' 
+      }, (payload) => {
+        console.log('🎉 NEW ORDER DETECTED:', payload);
+        console.log('Payload details:', JSON.stringify(payload, null, 2));
         try {
           const record = payload.new as { customer_name?: string; total?: number; id?: string };
           const customer = record?.customer_name || 'New customer';
@@ -303,8 +315,20 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           console.error('Error processing new order:', error);
         }
       })
+      .on('broadcast', { event: 'test' }, (payload) => {
+        console.log('📡 Broadcast test received:', payload);
+      })
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+        console.log('📡 Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to realtime order notifications');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Realtime channel error');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Realtime subscription timed out');
+        } else if (status === 'CLOSED') {
+          console.log('🔒 Realtime subscription closed');
+        }
       });
 
     return () => {
@@ -363,6 +387,51 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       setVoiceEnabled(true);
       console.log('Voice notifications enabled, permission ref set to:', speechPermissionRef.current);
     }
+  };
+
+  const testRealtimeConnection = async () => {
+    console.log('🧪 Testing realtime connection...');
+    try {
+      // Test broadcast
+      const channel = supabase.channel('test-channel');
+      await channel.subscribe((status) => {
+        console.log('Test channel status:', status);
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'test',
+            payload: { message: 'Test from admin dashboard' }
+          });
+          console.log('📡 Test broadcast sent');
+        }
+      });
+      
+      // Test database connection
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, customer_name, total, created_at')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error('❌ Database connection error:', error);
+      } else {
+        console.log('✅ Database connection OK, latest order:', data);
+      }
+    } catch (err) {
+      console.error('❌ Realtime test error:', err);
+    }
+  };
+
+  const simulateNewOrder = () => {
+    console.log('🎭 Simulating new order notification...');
+    setNewOrderNotice({ visible: true, title: 'Test order from Test Customer • ₱25.00' });
+    setActiveOrders((v) => v + 1);
+    playOrderNotificationSound(voiceEnabled);
+    
+    // Auto-hide after 4s
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 4000);
   };
 
   const stats = [
@@ -424,6 +493,20 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                 className="flex items-center gap-2"
               >
                 🎤 {voiceEnabled ? 'Voice ON' : 'Enable Voice'}
+              </Button>
+              <Button 
+                onClick={testRealtimeConnection} 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                📡 Test Realtime
+              </Button>
+              <Button 
+                onClick={simulateNewOrder} 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                🎭 Simulate Order
               </Button>
               <Button onClick={() => window.location.href = '/'} variant="dark">
                 Back to Site
