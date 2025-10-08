@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ImageUpload } from "@/components/ui/image-upload";
 import { ImageModal } from "@/components/ui/image-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, DollarSign, Package, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, Package, Eye, Filter, SortAsc, SortDesc, Search } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 
 interface Product {
@@ -54,6 +54,12 @@ export default function ProductManagement() {
   const [page, setPage] = useState<number>(0);
   const [totalProducts, setTotalProducts] = useState<number>(0);
   const pageSize = 20;
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'created_at' | 'category'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterStore, setFilterStore] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterAvailability, setFilterAvailability] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -79,18 +85,66 @@ export default function ProductManagement() {
       setError("");
       const from = page * pageSize;
       const to = from + pageSize - 1;
+      
+      // Build query with filters
+      let productQuery = supabase
+        .from("products")
+        .select("id,name,description,price,image,store_id,category,is_available,stores(name)");
+      
+      // Apply search filter
+      if (searchTerm) {
+        productQuery = productQuery.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+      
+      // Apply store filter
+      if (filterStore !== 'all') {
+        productQuery = productQuery.eq('store_id', filterStore);
+      }
+      
+      // Apply category filter
+      if (filterCategory !== 'all') {
+        productQuery = productQuery.eq('category', filterCategory);
+      }
+      
+      // Apply availability filter
+      if (filterAvailability !== 'all') {
+        productQuery = productQuery.eq('is_available', filterAvailability === 'available');
+      }
+      
+      // Apply sorting
+      const ascending = sortOrder === 'asc';
+      productQuery = productQuery.order(sortBy, { ascending });
+      
+      // Create count query (without pagination)
+      let countQuery = supabase
+        .from("products")
+        .select("id", { count: "exact", head: true });
+      
+      // Apply same filters to count query
+      if (searchTerm) {
+        countQuery = countQuery.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+      if (filterStore !== 'all') {
+        countQuery = countQuery.eq('store_id', filterStore);
+      }
+      if (filterCategory !== 'all') {
+        countQuery = countQuery.eq('category', filterCategory);
+      }
+      if (filterAvailability !== 'all') {
+        countQuery = countQuery.eq('is_available', filterAvailability === 'available');
+      }
+      
+      // Apply pagination to main query
+      productQuery = productQuery.range(from, to);
+      
       const [
         { data: storeRows, error: storeErr },
         { count: totalCnt },
         { data: productRows, error: productErr }
       ] = await Promise.all([
         supabase.from("stores").select("id,name"),
-        supabase.from("products").select("id", { count: "exact", head: true }),
-        supabase
-          .from("products")
-          .select("id,name,description,price,image,store_id,category,is_available,stores(name)")
-          .order('created_at', { ascending: false })
-          .range(from, to)
+        countQuery,
+        productQuery
       ]);
       setTotalProducts(totalCnt || 0);
       if (storeErr) setError(storeErr.message);
@@ -122,7 +176,7 @@ export default function ProductManagement() {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, supabase]);
+  }, [page, supabase, sortBy, sortOrder, searchTerm, filterStore, filterCategory, filterAvailability]);
 
   const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.storeId) return;
@@ -221,6 +275,28 @@ export default function ProductManagement() {
     const { error } = await supabase.from("products").update({ is_available: next }).eq("id", productId);
     if (error) { setError(error.message); return; }
     setProducts(products.map(product => product.id === productId ? { ...product, isAvailable: next } : product));
+  };
+
+  const handleSortChange = (newSortBy: 'name' | 'price' | 'created_at' | 'category') => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
+    setPage(0); // Reset to first page when sorting changes
+  };
+
+  const handleFilterChange = () => {
+    setPage(0); // Reset to first page when filters change
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterStore('all');
+    setFilterCategory('all');
+    setFilterAvailability('all');
+    setPage(0);
   };
 
   return (
@@ -330,6 +406,149 @@ export default function ProductManagement() {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white p-4 rounded-lg border space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search products by name or description..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  handleFilterChange();
+                }}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <Button variant="outline" onClick={clearFilters} className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Clear Filters
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Store Filter */}
+          <div>
+            <Label htmlFor="store-filter">Store</Label>
+            <Select value={filterStore} onValueChange={(value) => {
+              setFilterStore(value);
+              handleFilterChange();
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Stores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stores</SelectItem>
+                {stores.map((store) => (
+                  <SelectItem key={store.id} value={store.id}>
+                    {store.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <Label htmlFor="category-filter">Category</Label>
+            <Select value={filterCategory} onValueChange={(value) => {
+              setFilterCategory(value);
+              handleFilterChange();
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Availability Filter */}
+          <div>
+            <Label htmlFor="availability-filter">Availability</Label>
+            <Select value={filterAvailability} onValueChange={(value) => {
+              setFilterAvailability(value);
+              handleFilterChange();
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Products" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Products</SelectItem>
+                <SelectItem value="available">Available Only</SelectItem>
+                <SelectItem value="unavailable">Unavailable Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Sort Options */}
+          <div>
+            <Label htmlFor="sort-options">Sort By</Label>
+            <div className="flex gap-1">
+              <Select value={sortBy} onValueChange={(value: 'name' | 'price' | 'created_at' | 'category') => handleSortChange(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Date Created</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="price">Price</SelectItem>
+                  <SelectItem value="category">Category</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="px-2"
+              >
+                {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Filters Display */}
+        {(searchTerm || filterStore !== 'all' || filterCategory !== 'all' || filterAvailability !== 'all') && (
+          <div className="flex flex-wrap gap-2 pt-2 border-t">
+            <span className="text-sm text-gray-600">Active filters:</span>
+            {searchTerm && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Search: "{searchTerm}"
+                <button onClick={() => { setSearchTerm(''); handleFilterChange(); }} className="ml-1 hover:text-red-500">×</button>
+              </Badge>
+            )}
+            {filterStore !== 'all' && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Store: {stores.find(s => s.id === filterStore)?.name}
+                <button onClick={() => { setFilterStore('all'); handleFilterChange(); }} className="ml-1 hover:text-red-500">×</button>
+              </Badge>
+            )}
+            {filterCategory !== 'all' && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Category: {filterCategory}
+                <button onClick={() => { setFilterCategory('all'); handleFilterChange(); }} className="ml-1 hover:text-red-500">×</button>
+              </Badge>
+            )}
+            {filterAvailability !== 'all' && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {filterAvailability === 'available' ? 'Available Only' : 'Unavailable Only'}
+                <button onClick={() => { setFilterAvailability('all'); handleFilterChange(); }} className="ml-1 hover:text-red-500">×</button>
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
