@@ -175,7 +175,6 @@ export default function ProductManagement() {
       setLoading(false);
     };
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, supabase, sortBy, sortOrder, searchTerm, filterStore, filterCategory, filterAvailability]);
 
   const handleAddProduct = async () => {
@@ -190,25 +189,9 @@ export default function ProductManagement() {
       category: newProduct.category || "",
       is_available: newProduct.isAvailable ?? true,
     };
-    const { data, error } = await supabase.from("products").insert(payload).select("id,name,description,price,image,store_id,category,is_available,stores(name)").single();
+    const { error } = await supabase.from("products").insert(payload);
     if (error) { setError(error.message); return; }
-    const d = data as ProductRow;
-    const createdStoreName = Array.isArray(d.stores)
-      ? (d.stores as { name: string }[])[0]?.name ?? ""
-      : (d.stores as { name: string } | undefined)?.name ?? "";
-    const created: Product = {
-      id: d.id,
-      name: d.name,
-      description: d.description || "",
-      price: Number(d.price || 0),
-      image: d.image || "/logo.png",
-      storeId: d.store_id,
-      storeName: createdStoreName,
-      category: d.category || "",
-      isAvailable: Boolean(d.is_available),
-    };
     // Refresh to first page to include new item deterministically
-    setProducts((prev) => prev);
     setPage(0);
     setNewProduct({ name: "", description: "", price: 0, image: "/logo.png", storeId: "", category: "", isAvailable: true });
     setIsAddDialogOpen(false);
@@ -525,7 +508,7 @@ export default function ProductManagement() {
             <span className="text-sm text-gray-600">Active filters:</span>
             {searchTerm && (
               <Badge variant="secondary" className="flex items-center gap-1">
-                Search: "{searchTerm}"
+                Search: &ldquo;{searchTerm}&rdquo;
                 <button onClick={() => { setSearchTerm(''); handleFilterChange(); }} className="ml-1 hover:text-red-500">×</button>
               </Badge>
             )}
