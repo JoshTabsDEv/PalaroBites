@@ -74,7 +74,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         
         // Try multiple approaches to ensure speech works
         const speakText = () => {
-          const utterance = new SpeechSynthesisUtterance('New activity');
+          const utterance = new SpeechSynthesisUtterance('New order');
           utterance.volume = 1.0; // Maximum volume
           utterance.rate = 0.8; // Slower for clarity
           utterance.pitch = 1.0; // Normal pitch
