@@ -5,7 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Store, Package, Users, DollarSign, Plus } from "lucide-react";
+import { Store, Package, Users, DollarSign, Plus, RefreshCw } from "lucide-react";
 import StoreManagement from "@/components/admin/store-management";
 import ProductManagement from "@/components/admin/product-management";
 import OrderManagement from "./order-management";
@@ -25,10 +25,14 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [todaysRevenue, setTodaysRevenue] = useState<number>(0);
   const [activity, setActivity] = useState<Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string }>>([]);
   const [newOrderNotice, setNewOrderNotice] = useState<{ visible: boolean; title: string } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
   const hideTimerRef = useRef<number | null>(null);
+  const refreshIntervalRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const loadStats = async () => {
+  const loadStats = async () => {
+    setIsRefreshing(true);
+    try {
       // total stores
       const { count: storesCnt } = await supabase
         .from('stores')
@@ -83,7 +87,12 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       items.sort((a,b) => (new Date(b.ts).getTime() - new Date(a.ts).getTime()));
       const trimmed = items.slice(0,6).map((i) => ({ kind: i.kind, title: i.title, when: i.when }));
       setActivity(trimmed);
-    };
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     loadStats();
   }, [supabase]);
 
@@ -139,6 +148,34 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     };
   }, [supabase]);
 
+  // Auto-refresh functionality
+  useEffect(() => {
+    if (autoRefreshEnabled) {
+      refreshIntervalRef.current = window.setInterval(() => {
+        loadStats();
+      }, 5000); // Refresh every 5 seconds
+    } else {
+      if (refreshIntervalRef.current) {
+        window.clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        window.clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, [autoRefreshEnabled]);
+
+  const toggleAutoRefresh = () => {
+    setAutoRefreshEnabled(!autoRefreshEnabled);
+  };
+
+  const handleManualRefresh = () => {
+    loadStats();
+  };
+
   const stats = [
     { title: "Total Stores", value: String(storeCount), icon: Store, color: "text-blue-600" },
     { title: "Total Products", value: String(productCount), icon: Package, color: "text-green-600" },
@@ -167,9 +204,28 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-gray-600">Welcome back, {user.email?.split('@')[0]}</p>
             </div>
-            <Button onClick={() => window.location.href = '/'} variant="dark">
-              Back to Site
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={handleManualRefresh} 
+                variant="outline" 
+                disabled={isRefreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+              <Button 
+                onClick={toggleAutoRefresh} 
+                variant={autoRefreshEnabled ? "dark" : "outline"}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                {autoRefreshEnabled ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
+              </Button>
+              <Button onClick={() => window.location.href = '/'} variant="dark">
+                Back to Site
+              </Button>
+            </div>
           </div>
         </div>
       </div>

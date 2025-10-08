@@ -77,6 +77,24 @@ export default function OrderManagement() {
   const updateStatus = async (id: string, status: OrderStatus) => {
     const { error } = await supabase.from('orders').update({ status }).eq('id', id);
     if (!error) setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+    if (!error && (status === 'confirmed' || status === 'out_for_delivery')) {
+      try {
+        const target = orders.find((o) => o.id === id);
+        await fetch('/api/notify-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: id,
+            status,
+            email: target?.customer_email,
+            customerName: target?.customer_name,
+            total: target?.total,
+          }),
+        });
+      } catch {
+        // ignore notification errors in UI
+      }
+    }
   };
 
   const startChat = (email?: string | null) => {
