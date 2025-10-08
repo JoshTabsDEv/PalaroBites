@@ -28,14 +28,21 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const hideTimerRef = useRef<number | null>(null);
   const refreshIntervalRef = useRef<number | null>(null);
   const previousActivityRef = useRef<Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string }>>([]);
   const speechPermissionRef = useRef<boolean>(false);
 
-  // Initialize speech synthesis
+  // Set client-side state
   useEffect(() => {
-    if ('speechSynthesis' in window) {
+    setIsClient(true);
+  }, []);
+
+  // Initialize speech synthesis (client-side only)
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       // Load voices
       const loadVoices = () => {
         const voices = speechSynthesis.getVoices();
@@ -53,30 +60,120 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   }, []);
 
   const playActivitySound = () => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    console.log('🎵 Playing activity sound with AI voice...');
     try {
+      // Play AI voice saying "new activity"
+      if ('speechSynthesis' in window && voiceEnabled && speechPermissionRef.current) {
+        console.log('Playing AI voice: "New activity"');
+        
+        // Cancel any ongoing speech first
+        speechSynthesis.cancel();
+        
+        // Try multiple approaches to ensure speech works
+        const speakText = () => {
+          const utterance = new SpeechSynthesisUtterance('New activity');
+          utterance.volume = 1.0; // Maximum volume
+          utterance.rate = 0.8; // Slower for clarity
+          utterance.pitch = 1.0; // Normal pitch
+          utterance.lang = 'en-US'; // Explicit language
+          
+          // Try to use a better voice if available
+          const voices = speechSynthesis.getVoices();
+          const preferredVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && 
+            (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Alex') || voice.name.includes('Samantha'))
+          );
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+            console.log('Using voice for activity:', preferredVoice.name);
+          } else if (voices.length > 0) {
+            // Use first available English voice
+            const englishVoice = voices.find(voice => voice.lang.startsWith('en'));
+            if (englishVoice) {
+              utterance.voice = englishVoice;
+              console.log('Using English voice for activity:', englishVoice.name);
+            }
+          }
+          
+          utterance.onstart = () => console.log('Activity speech started');
+          utterance.onend = () => console.log('Activity speech ended');
+          utterance.onerror = (e) => {
+            console.error('Activity speech error:', e);
+            // Try again with simpler settings if first attempt fails
+            if (e.error === 'not-allowed') {
+              console.log('Activity speech blocked, trying alternative approach...');
+              setTimeout(() => {
+                const simpleUtterance = new SpeechSynthesisUtterance('New activity');
+                simpleUtterance.volume = 0.5;
+                simpleUtterance.rate = 1.0;
+                speechSynthesis.speak(simpleUtterance);
+              }, 200);
+            }
+          };
+          
+          speechSynthesis.speak(utterance);
+        };
+        
+        // Try immediately and with a delay
+        speakText();
+        setTimeout(speakText, 100);
+      } else if (!voiceEnabled) {
+        console.log('Voice not enabled for activity sound');
+      } else if (!speechPermissionRef.current) {
+        console.log('Speech permission not granted for activity sound');
+      } else {
+        console.log('Speech synthesis not available for activity sound');
+      }
+
+      // Play enhanced sound notification
       type AudioContextWindow = { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
       const w = window as unknown as AudioContextWindow;
       const AudioContextCtor = w.AudioContext ?? w.webkitAudioContext;
       if (AudioContextCtor) {
+        console.log('Creating audio context for activity sound notification');
         const ctx = new AudioContextCtor();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.value = 660; // E5 - different from order notification sound
-        o.connect(g);
-        g.connect(ctx.destination);
-        g.gain.setValueAtTime(0.001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-        o.start();
-        o.stop(ctx.currentTime + 0.15);
+        
+        // Create a more complex sound with multiple frequencies (different from order sound)
+        const frequencies = [523, 659, 784]; // C5, E5, G5 - different chord from order notification
+        const oscillators = frequencies.map(freq => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.value = freq;
+          o.connect(g);
+          g.connect(ctx.destination);
+          return { oscillator: o, gain: g };
+        });
+
+        const duration = 0.6; // Slightly shorter than order notification
+        const now = ctx.currentTime;
+
+        oscillators.forEach(({ oscillator, gain }) => {
+          // Louder volume with smooth fade
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.exponentialRampToValueAtTime(0.3, now + 0.05); // Slightly quieter than order sound
+          gain.gain.exponentialRampToValueAtTime(0.2, now + duration * 0.3);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+          
+          oscillator.start(now);
+          oscillator.stop(now + duration);
+        });
+        console.log('Activity audio oscillators started');
+      } else {
+        console.log('AudioContext not available for activity sound');
       }
-    } catch {
-      // ignore audio errors
+    } catch (error) {
+      console.error('Error in playActivitySound:', error);
     }
   };
 
   const playOrderNotificationSound = (enableVoice = true) => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     console.log('playOrderNotificationSound called, voice enabled:', enableVoice, 'voiceEnabled state:', voiceEnabled, 'speechPermission:', speechPermissionRef.current);
     try {
       // Play AI voice saying "new order" only if enabled and permission granted
@@ -252,15 +349,33 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       
       // Check for new activity items and play sound
       const previousActivity = previousActivityRef.current;
+      console.log('Previous activity:', previousActivity);
+      console.log('Current activity:', trimmed);
+      
       if (previousActivity.length > 0 && trimmed.length > 0) {
-        const newItems = trimmed.filter(newItem => 
-          !previousActivity.some(prevItem => 
-            prevItem.title === newItem.title && prevItem.when === newItem.when
-          )
-        );
-        if (newItems.length > 0) {
+        // Check if there are new items by comparing the first few items (most recent)
+        const hasNewActivity = trimmed.slice(0, 3).some((newItem, index) => {
+          const prevItem = previousActivity[index];
+          if (!prevItem) return true; // New item if previous doesn't exist at this position
+          
+          // Check if it's a different item (different title or significantly different time)
+          const newTime = new Date(newItem.when).getTime();
+          const prevTime = new Date(prevItem.when).getTime();
+          const timeDiff = Math.abs(newTime - prevTime);
+          
+          // Consider it new if title is different OR if time difference is more than 1 minute
+          return newItem.title !== prevItem.title || timeDiff > 60000;
+        });
+        
+        if (hasNewActivity) {
+          console.log('🎵 New activity detected! Playing activity sound...');
           playActivitySound();
+        } else {
+          console.log('No new activity detected');
         }
+      } else if (previousActivity.length === 0 && trimmed.length > 0) {
+        // First load - don't play sound
+        console.log('First load - no sound');
       }
       
       setActivity(trimmed);
@@ -367,6 +482,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   };
 
   const enableVoiceNotifications = () => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     if ('speechSynthesis' in window) {
       console.log('Enabling voice notifications...');
       // Test speech synthesis to enable it for future use
@@ -444,6 +562,11 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 6000);
   };
 
+  const testActivitySound = () => {
+    console.log('🎵 Testing activity sound...');
+    playActivitySound();
+  };
+
   const stats = [
     { title: "Total Stores", value: String(storeCount), icon: Store, color: "text-blue-600" },
     { title: "Total Products", value: String(productCount), icon: Package, color: "text-green-600" },
@@ -506,34 +629,45 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                 <RefreshCw className="h-4 w-4" />
                 {autoRefreshEnabled ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
               </Button>
-              <Button 
-                onClick={() => playOrderNotificationSound(true)} 
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                🔊 Test Sound
-              </Button>
-              <Button 
-                onClick={enableVoiceNotifications} 
-                variant={voiceEnabled ? "dark" : "outline"}
-                className="flex items-center gap-2"
-              >
-                🎤 {voiceEnabled ? 'Voice ON' : 'Enable Voice'}
-              </Button>
-              <Button 
-                onClick={testRealtimeConnection} 
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                📡 Test Realtime
-              </Button>
-              <Button 
-                onClick={simulateNewOrder} 
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                🎭 Simulate Order
-              </Button>
+              {isClient && (
+                <>
+                  <Button 
+                    onClick={() => playOrderNotificationSound(true)} 
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    🔊 Test Sound
+                  </Button>
+                  <Button 
+                    onClick={enableVoiceNotifications} 
+                    variant={voiceEnabled ? "dark" : "outline"}
+                    className="flex items-center gap-2"
+                  >
+                    🎤 {voiceEnabled ? 'Voice ON' : 'Enable Voice'}
+                  </Button>
+                  <Button 
+                    onClick={testRealtimeConnection} 
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    📡 Test Realtime
+                  </Button>
+                  <Button 
+                    onClick={simulateNewOrder} 
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    🎭 Simulate Order
+                  </Button>
+                  <Button 
+                    onClick={testActivitySound} 
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    🎵 Test Activity Sound
+                  </Button>
+                </>
+              )}
               <Button onClick={() => window.location.href = '/'} variant="dark">
                 Back to Site
               </Button>
