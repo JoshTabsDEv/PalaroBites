@@ -29,6 +29,31 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
   const hideTimerRef = useRef<number | null>(null);
   const refreshIntervalRef = useRef<number | null>(null);
+  const previousActivityRef = useRef<Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string }>>([]);
+
+  const playActivitySound = () => {
+    try {
+      type AudioContextWindow = { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+      const w = window as unknown as AudioContextWindow;
+      const AudioContextCtor = w.AudioContext ?? w.webkitAudioContext;
+      if (AudioContextCtor) {
+        const ctx = new AudioContextCtor();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 660; // E5 - different from order notification sound
+        o.connect(g);
+        g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        o.start();
+        o.stop(ctx.currentTime + 0.15);
+      }
+    } catch {
+      // ignore audio errors
+    }
+  };
 
   const loadStats = async () => {
     setIsRefreshing(true);
@@ -86,7 +111,22 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       }
       items.sort((a,b) => (new Date(b.ts).getTime() - new Date(a.ts).getTime()));
       const trimmed = items.slice(0,6).map((i) => ({ kind: i.kind, title: i.title, when: i.when }));
+      
+      // Check for new activity items and play sound
+      const previousActivity = previousActivityRef.current;
+      if (previousActivity.length > 0 && trimmed.length > 0) {
+        const newItems = trimmed.filter(newItem => 
+          !previousActivity.some(prevItem => 
+            prevItem.title === newItem.title && prevItem.when === newItem.when
+          )
+        );
+        if (newItems.length > 0) {
+          playActivitySound();
+        }
+      }
+      
       setActivity(trimmed);
+      previousActivityRef.current = trimmed;
     } finally {
       setIsRefreshing(false);
     }
