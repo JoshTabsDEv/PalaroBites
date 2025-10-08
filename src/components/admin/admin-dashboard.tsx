@@ -31,6 +31,25 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const refreshIntervalRef = useRef<number | null>(null);
   const previousActivityRef = useRef<Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string }>>([]);
 
+  // Initialize speech synthesis
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      // Load voices
+      const loadVoices = () => {
+        const voices = speechSynthesis.getVoices();
+        console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+      };
+      
+      // Load voices immediately and when they change
+      loadVoices();
+      speechSynthesis.onvoiceschanged = loadVoices;
+      
+      return () => {
+        speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }, []);
+
   const playActivitySound = () => {
     try {
       type AudioContextWindow = { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
@@ -56,14 +75,65 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   };
 
   const playOrderNotificationSound = () => {
+    console.log('playOrderNotificationSound called');
     try {
       // Play AI voice saying "new order"
       if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance('New order');
-        utterance.volume = 0.8;
-        utterance.rate = 0.9;
-        utterance.pitch = 1.1;
-        speechSynthesis.speak(utterance);
+        console.log('Playing AI voice: "New order"');
+        
+        // Cancel any ongoing speech first
+        speechSynthesis.cancel();
+        
+        // Try multiple approaches to ensure speech works
+        const speakText = () => {
+          const utterance = new SpeechSynthesisUtterance('New order');
+          utterance.volume = 1.0; // Maximum volume
+          utterance.rate = 0.8; // Slower for clarity
+          utterance.pitch = 1.0; // Normal pitch
+          utterance.lang = 'en-US'; // Explicit language
+          
+          // Try to use a better voice if available
+          const voices = speechSynthesis.getVoices();
+          const preferredVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && 
+            (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Alex') || voice.name.includes('Samantha'))
+          );
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+            console.log('Using voice:', preferredVoice.name);
+          } else if (voices.length > 0) {
+            // Use first available English voice
+            const englishVoice = voices.find(voice => voice.lang.startsWith('en'));
+            if (englishVoice) {
+              utterance.voice = englishVoice;
+              console.log('Using English voice:', englishVoice.name);
+            }
+          }
+          
+          utterance.onstart = () => console.log('Speech started');
+          utterance.onend = () => console.log('Speech ended');
+          utterance.onerror = (e) => {
+            console.error('Speech error:', e);
+            // Try again with simpler settings if first attempt fails
+            if (e.error === 'not-allowed') {
+              console.log('Speech blocked, trying alternative approach...');
+              setTimeout(() => {
+                const simpleUtterance = new SpeechSynthesisUtterance('New order');
+                simpleUtterance.volume = 0.5;
+                simpleUtterance.rate = 1.0;
+                speechSynthesis.speak(simpleUtterance);
+              }, 200);
+            }
+          };
+          
+          speechSynthesis.speak(utterance);
+        };
+        
+        // Try immediately and with a delay
+        speakText();
+        setTimeout(speakText, 100);
+      } else {
+        console.log('Speech synthesis not available');
       }
 
       // Play enhanced sound notification
@@ -71,6 +141,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       const w = window as unknown as AudioContextWindow;
       const AudioContextCtor = w.AudioContext ?? w.webkitAudioContext;
       if (AudioContextCtor) {
+        console.log('Creating audio context for sound notification');
         const ctx = new AudioContextCtor();
         
         // Create a more complex sound with multiple frequencies
@@ -98,9 +169,12 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           oscillator.start(now);
           oscillator.stop(now + duration);
         });
+        console.log('Audio oscillators started');
+      } else {
+        console.log('AudioContext not available');
       }
-    } catch {
-      // ignore audio errors
+    } catch (error) {
+      console.error('Error in playOrderNotificationSound:', error);
     }
   };
 
@@ -187,29 +261,36 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   // Realtime: notify on new orders with sound
   useEffect(() => {
+    console.log('Setting up realtime order notifications...');
     const channel = supabase
       .channel('orders-inserts')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+        console.log('New order detected:', payload);
         try {
           const record = payload.new as { customer_name?: string; total?: number; id?: string };
           const customer = record?.customer_name || 'New customer';
           const total = Number(record?.total || 0);
+          console.log('Order details:', { customer, total, id: record?.id });
+          
           setNewOrderNotice({ visible: true, title: `New order from ${customer} • ₱${total.toFixed(2)}` });
 
           // Increment active orders optimistically
           setActiveOrders((v) => v + 1);
 
           // Play enhanced order notification sound with AI voice
+          console.log('Playing order notification sound...');
           playOrderNotificationSound();
 
           // Auto-hide after 4s
           if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
           hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 4000);
-        } catch {
-          // swallow errors from malformed payload
+        } catch (error) {
+          console.error('Error processing new order:', error);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     return () => {
       if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
@@ -290,6 +371,13 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               >
                 <RefreshCw className="h-4 w-4" />
                 {autoRefreshEnabled ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
+              </Button>
+              <Button 
+                onClick={playOrderNotificationSound} 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                🔊 Test Sound
               </Button>
               <Button onClick={() => window.location.href = '/'} variant="dark">
                 Back to Site
