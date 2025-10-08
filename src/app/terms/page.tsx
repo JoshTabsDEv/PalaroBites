@@ -74,7 +74,7 @@ export default function TermsPage() {
               <h2 className="text-xl font-semibold mb-2">4. Orders & Payments</h2>
               <ul className="text-sm text-muted-foreground leading-relaxed list-disc pl-5 space-y-1">
                 <li>All orders are subject to store availability and acceptance.</li>
-                <li>A flat delivery fee of ₱5 applies to each order unless otherwise stated.</li>
+                <li>Delivery fee starts at ₱5 for first 3 items, then ₱5 for every additional 3 items.</li>
                 <li>Cash on Delivery (CoD) is the primary payment method. Have exact cash when possible.</li>
               </ul>
             </section>

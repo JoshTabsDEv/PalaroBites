@@ -5,7 +5,7 @@ PalaroBites is a campus food delivery web app built with Next.js (App Router), T
 ## Overview
 
 - Browse stores and products (with filters and search)
-- Add to cart and checkout (Cash on Delivery) with a flat ₱5 delivery fee
+- Add to cart and checkout (Cash on Delivery) with delivery fee starting at ₱5 for first 3 items
 - Orders page with receipts and status
 - Admin dashboard for stores, products, and orders
 - Auth via Supabase (OAuth supported)
