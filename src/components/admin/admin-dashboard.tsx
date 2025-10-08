@@ -65,9 +65,15 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     
     console.log('🎵 Playing activity sound with AI voice...');
     try {
-      // Play AI voice saying "new activity"
-      if ('speechSynthesis' in window && voiceEnabled && speechPermissionRef.current) {
-        console.log('Playing AI voice: "New activity"');
+      // Play AI voice saying "new order" (for activity)
+      console.log('Voice conditions check:', {
+        speechSynthesis: 'speechSynthesis' in window,
+        voiceEnabled,
+        speechPermission: speechPermissionRef.current
+      });
+      
+      if ('speechSynthesis' in window) {
+        console.log('Playing AI voice: "New order" for activity');
         
         // Cancel any ongoing speech first
         speechSynthesis.cancel();
@@ -120,12 +126,18 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         // Try immediately and with a delay
         speakText();
         setTimeout(speakText, 100);
-      } else if (!voiceEnabled) {
-        console.log('Voice not enabled for activity sound');
-      } else if (!speechPermissionRef.current) {
-        console.log('Speech permission not granted for activity sound');
       } else {
         console.log('Speech synthesis not available for activity sound');
+        // Try a simple fallback
+        try {
+          const simpleUtterance = new SpeechSynthesisUtterance('New order');
+          simpleUtterance.volume = 0.8;
+          simpleUtterance.rate = 1.0;
+          speechSynthesis.speak(simpleUtterance);
+          console.log('Fallback speech attempt made');
+        } catch (e) {
+          console.error('Fallback speech failed:', e);
+        }
       }
 
       // Play enhanced sound notification
