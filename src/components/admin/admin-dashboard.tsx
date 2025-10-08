@@ -520,64 +520,6 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     }
   };
 
-  const testRealtimeConnection = async () => {
-    console.log('🧪 Testing realtime connection...');
-    try {
-      // Test broadcast
-      const channel = supabase.channel('test-channel');
-      await channel.subscribe((status) => {
-        console.log('Test channel status:', status);
-        if (status === 'SUBSCRIBED') {
-          channel.send({
-            type: 'broadcast',
-            event: 'test',
-            payload: { message: 'Test from admin dashboard' }
-          });
-          console.log('📡 Test broadcast sent');
-        }
-      });
-      
-      // Test database connection
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id, customer_name, total, created_at')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) {
-        console.error('❌ Database connection error:', error);
-      } else {
-        console.log('✅ Database connection OK, latest order:', data);
-      }
-    } catch (err) {
-      console.error('❌ Realtime test error:', err);
-    }
-  };
-
-  const simulateNewOrder = () => {
-    console.log('🎭 Simulating new order notification...');
-    
-    // Generate random order details for more realistic simulation
-    const customers = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown'];
-    const amounts = [15.50, 25.00, 32.75, 18.25, 45.00, 28.50];
-    const randomCustomer = customers[Math.floor(Math.random() * customers.length)];
-    const randomAmount = amounts[Math.floor(Math.random() * amounts.length)];
-    
-    const orderTitle = `New order from ${randomCustomer} • ₱${randomAmount.toFixed(2)}`;
-    
-    setNewOrderNotice({ visible: true, title: orderTitle });
-    setActiveOrders((v) => v + 1);
-    playOrderNotificationSound(voiceEnabled);
-    
-    // Auto-hide after 6s (longer for simulation)
-    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = window.setTimeout(() => setNewOrderNotice(null), 6000);
-  };
-
-  const testActivitySound = () => {
-    console.log('🎵 Testing activity sound...');
-    playActivitySound();
-  };
 
   const stats = [
     { title: "Total Stores", value: String(storeCount), icon: Store, color: "text-blue-600" },
@@ -642,43 +584,13 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                 {autoRefreshEnabled ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
               </Button>
               {isClient && (
-                <>
-                  <Button 
-                    onClick={() => playOrderNotificationSound(true)} 
-                    variant="outline"
-                    className="flex items-center gap-2"
-                  >
-                    🔊 Test Sound
-                  </Button>
-                  <Button 
-                    onClick={enableVoiceNotifications} 
-                    variant={voiceEnabled ? "dark" : "outline"}
-                    className="flex items-center gap-2"
-                  >
-                    🎤 {voiceEnabled ? 'Voice ON' : 'Enable Voice'}
-                  </Button>
-                  <Button 
-                    onClick={testRealtimeConnection} 
-                    variant="outline"
-                    className="flex items-center gap-2"
-                  >
-                    📡 Test Realtime
-                  </Button>
-                  <Button 
-                    onClick={simulateNewOrder} 
-                    variant="outline"
-                    className="flex items-center gap-2"
-                  >
-                    🎭 Simulate Order
-                  </Button>
-                  <Button 
-                    onClick={testActivitySound} 
-                    variant="outline"
-                    className="flex items-center gap-2"
-                  >
-                    🎵 Test Activity Sound
-                  </Button>
-                </>
+                <Button 
+                  onClick={enableVoiceNotifications} 
+                  variant={voiceEnabled ? "dark" : "outline"}
+                  className="flex items-center gap-2"
+                >
+                  🎤 {voiceEnabled ? 'Voice ON' : 'Enable Voice'}
+                </Button>
               )}
               <Button onClick={() => window.location.href = '/'} variant="dark">
                 Back to Site
