@@ -31,6 +31,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const hideTimerRef = useRef<number | null>(null);
   const refreshIntervalRef = useRef<number | null>(null);
   const previousActivityRef = useRef<Array<{ kind: 'Store'|'Product'|'Order'; title: string; when: string }>>([]);
+  const speechPermissionRef = useRef<boolean>(false);
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -76,11 +77,11 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   };
 
   const playOrderNotificationSound = (enableVoice = true) => {
-    console.log('playOrderNotificationSound called, voice enabled:', enableVoice);
+    console.log('playOrderNotificationSound called, voice enabled:', enableVoice, 'voiceEnabled state:', voiceEnabled, 'speechPermission:', speechPermissionRef.current);
     try {
-      // Play AI voice saying "new order" only if enabled
-      if (enableVoice && 'speechSynthesis' in window) {
-        console.log('Playing AI voice: "New order"');
+      // Play AI voice saying "new order" only if enabled and permission granted
+      if (enableVoice && voiceEnabled && speechPermissionRef.current && 'speechSynthesis' in window) {
+        console.log('Playing AI voice: "New order" - all conditions met');
         
         // Cancel any ongoing speech first
         speechSynthesis.cancel();
@@ -135,6 +136,17 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         setTimeout(speakText, 100);
       } else if (!enableVoice) {
         console.log('Voice disabled for this notification');
+      } else if (!voiceEnabled) {
+        console.log('Voice not enabled - click Enable Voice button first');
+      } else if (!speechPermissionRef.current) {
+        console.log('Speech permission not granted - try clicking Enable Voice again');
+        // Try anyway in case browser allows it
+        console.log('Attempting voice anyway...');
+        const utterance = new SpeechSynthesisUtterance('New order');
+        utterance.volume = 0.8;
+        utterance.rate = 0.9;
+        utterance.onerror = (e) => console.error('Voice attempt failed:', e);
+        speechSynthesis.speak(utterance);
       } else {
         console.log('Speech synthesis not available');
       }
@@ -331,13 +343,25 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const enableVoiceNotifications = () => {
     if ('speechSynthesis' in window) {
+      console.log('Enabling voice notifications...');
       // Test speech synthesis to enable it for future use
       const utterance = new SpeechSynthesisUtterance('Voice notifications enabled');
       utterance.volume = 0.1; // Very quiet test
       utterance.rate = 1.5; // Fast
+      utterance.onstart = () => {
+        console.log('Voice test started - permission granted');
+        speechPermissionRef.current = true;
+      };
+      utterance.onend = () => {
+        console.log('Voice test ended - ready for realtime notifications');
+      };
+      utterance.onerror = (e) => {
+        console.error('Voice test error:', e);
+        speechPermissionRef.current = false;
+      };
       speechSynthesis.speak(utterance);
       setVoiceEnabled(true);
-      console.log('Voice notifications enabled');
+      console.log('Voice notifications enabled, permission ref set to:', speechPermissionRef.current);
     }
   };
 
