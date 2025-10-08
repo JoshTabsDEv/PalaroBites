@@ -30,7 +30,7 @@ interface HeroProps {
 }
 
 export default function Hero({
-  title = "Exquisite Culinary Experience",
+  title = "Cec Food Court Palaro",
   description = "Discover the finest flavors crafted with passion",
   mockup = (
     <Image
